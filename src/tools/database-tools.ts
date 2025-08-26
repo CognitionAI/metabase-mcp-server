@@ -206,6 +206,69 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
   });
 
   /**
+   * Generate a Metabase playground link for a SQL query
+   * 
+   * Creates a shareable URL that opens the Metabase query editor with the specified
+   * SQL query pre-loaded. This allows users to see results in a user-friendly way
+   * and experiment with the data interactively.
+   * 
+   * @param {string} query - The SQL query to execute
+   * @param {number} database_id - The ID of the database to query against
+   * @param {string} card_entity_id - Card entity ID for the organization
+   * @param {string} [display] - Visualization type (default: "table")
+   * @returns {Promise<string>} Shareable Metabase playground URL
+   */
+  server.addTool({
+    name: "get_metabase_playground_link",
+    description: "Generate a shareable Metabase playground link for a SQL query - use this to create interactive links where users can see query results and experiment with the data",
+    metadata: { isEssential: true, isRead: true },
+    parameters: z.object({
+      query: z.string().describe("The SQL query to execute"),
+      database_id: z.number().describe("The ID of the database to query against"),
+      card_entity_id: z.string().describe("Card entity ID for the organization (reverse engineered from existing links)"),
+      display: z.string().optional().default("table").describe("Visualization type (table, bar, line, etc.)"),
+    }),
+    execute: async (args: { query: string; database_id: number; card_entity_id: string; display?: string }) => {
+      try {
+        const payload = {
+          dataset_query: {
+            database: args.database_id,
+            info: {
+              "card-entity-id": args.card_entity_id
+            },
+            type: "native",
+            native: {
+              "template-tags": {},
+              query: args.query
+            }
+          },
+          display: args.display || "table",
+          parameters: [],
+          visualization_settings: {},
+          type: "question"
+        };
+
+        // Base64 encode the payload
+        const queryB64 = Buffer.from(JSON.stringify(payload)).toString('base64');
+        
+        // Get base URL from environment
+        const baseUrl = process.env.METABASE_URL?.replace(/\/$/, '');
+        const playgroundUrl = `${baseUrl}/question#${queryB64}`;
+
+        return JSON.stringify({
+          playground_url: playgroundUrl,
+          query: args.query,
+          database_id: args.database_id,
+          card_entity_id: args.card_entity_id || null,
+          display: args.display || "table"
+        }, null, 2);
+      } catch (error) {
+        throw new Error(`Failed to generate playground link: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    },
+  });
+
+  /**
    * Add Metabase sample database
    * 
    * Adds the built-in Metabase sample database with demo data for testing
