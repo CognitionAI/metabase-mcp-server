@@ -1,6 +1,6 @@
 {
   "name": "@cognitionai/metabase-mcp-server",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "A Model Context Protocol server for Metabase integration",
   "author": "Cognition <devin@cognition.ai>",
   "license": "MIT",
@@ -61,5 +61,10 @@
   "engines": {
     "node": ">=20.19.0",
     "npm": ">=8.0.0"
+  },
+  "overrides": {
+    "fastmcp": {
+      "@modelcontextprotocol/sdk": "1.22.0"
+    }
   }
 }
