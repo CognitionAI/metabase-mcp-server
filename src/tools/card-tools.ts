@@ -86,10 +86,11 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       .object({
         name: z.string().describe("Card name"),
         description: z.string().optional().describe("Description"),
-        dataset_query: z.object({}).optional().describe("Dataset query object"),
+        dataset_query: z.object({}).passthrough().optional().describe("Dataset query object"),
         display: z.string().optional().describe("Visualization type"),
         visualization_settings: z
           .object({})
+          .passthrough()
           .optional()
           .describe("Visualization settings"),
         collection_id: z.number().optional().describe("Collection to save in"),
@@ -125,9 +126,10 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-      updates: z.object({}).describe("Fields to update"),
+      updates: z.object({}).passthrough().describe("Fields to update"),
       query_params: z
         .object({})
+        .passthrough()
         .optional()
         .describe("Optional query parameters for update"),
     }),
@@ -263,7 +265,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
       export_format: z.string().describe("Export format (e.g., csv, xlsx, json)"),
-      parameters: z.object({}).optional().describe("Execution parameters"),
+      parameters: z.object({}).passthrough().optional().describe("Execution parameters"),
     }),
     execute: async (args: {
       card_id: number;
@@ -558,7 +560,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     description: "Run a Metabase card with pivot table formatting to cross-tabulate data with rows and columns - use this to create summary tables, analyze data relationships, or generate matrix-style reports from existing cards",
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-      parameters: z.object({}).optional().describe("Execution parameters"),
+      parameters: z.object({}).passthrough().optional().describe("Execution parameters"),
     }),
     execute: async (args: { card_id: number; parameters?: any }) => {
       try {

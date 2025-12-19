@@ -200,7 +200,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       name: z.string().describe("Name of the dashboard (required)"),
       description: z.string().optional().describe("Description of the dashboard"),
-      parameters: z.array(z.object({})).optional().describe("Dashboard parameters array"),
+      parameters: z.array(z.object({}).passthrough()).optional().describe("Dashboard parameters array"),
       collection_id: z.number().optional().describe("Collection ID to save dashboard in"),
       collection_position: z.number().optional().describe("Position within the collection"),
     }),
@@ -298,8 +298,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
       cardId: z.number().optional().describe("The ID of the card to add"),
-      parameter_mappings: z.array(z.object({})).optional().describe("Parameter mappings for the card"),
-      series: z.array(z.object({})).optional().describe("Series data for the card"),
+      parameter_mappings: z.array(z.object({}).passthrough()).optional().describe("Parameter mappings for the card"),
+      series: z.array(z.object({}).passthrough()).optional().describe("Series data for the card"),
     }),
     execute: async (args: { dashboard_id: number; cardId?: number; parameter_mappings?: any[]; series?: any[] }) => {
       try {
@@ -382,7 +382,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     description: "Save a complete dashboard object with nested data - use this for bulk operations or complex dashboard structures",
     metadata: { isWrite: true },
     parameters: z.object({
-      dashboard: z.object({}).describe("Dashboard object to save"),
+      dashboard: z.object({}).passthrough().describe("Dashboard object to save"),
     }),
     execute: async (args: { dashboard: any }) => {
       try {
@@ -411,7 +411,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       parent_collection_id: z.number().describe("The parent collection ID"),
-      dashboard: z.object({}).describe("Dashboard object to save"),
+      dashboard: z.object({}).passthrough().describe("Dashboard object to save"),
     }),
     execute: async (args: { parent_collection_id: number; dashboard: any }) => {
       try {
@@ -447,7 +447,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       dashboard_id: z.number().describe("The ID of the dashboard to update"),
       name: z.string().optional().describe("New name for the dashboard"),
       description: z.string().optional().describe("New description for the dashboard"),
-      parameters: z.array(z.object({})).optional().describe("Dashboard parameters"),
+      parameters: z.array(z.object({}).passthrough()).optional().describe("Dashboard parameters"),
       points_of_interest: z.string().optional().describe("Points of interest"),
       archived: z.boolean().optional().describe("Whether to archive the dashboard"),
       collection_position: z.number().optional().describe("Position within the collection"),
@@ -455,7 +455,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       enable_embedding: z.boolean().optional().describe("Enable embedding (requires superuser)"),
       collection_id: z.number().optional().describe("Collection ID to move dashboard to"),
       caveats: z.string().optional().describe("Dashboard caveats"),
-      embedding_params: z.object({}).optional().describe("Embedding parameters"),
+      embedding_params: z.object({}).passthrough().optional().describe("Embedding parameters"),
       position: z.number().optional().describe("Dashboard position"),
     }),
     execute: async (args: { dashboard_id: number; [key: string]: any }) => {
@@ -488,12 +488,12 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       dashboard_id: z.number().describe("The ID of the dashboard"),
       cards: z.array(z.object({
         id: z.number().describe("Card ID"),
-        sizeX: z.number().optional().describe("Width of the card"),
-        sizeY: z.number().optional().describe("Height of the card"),
+        size_x: z.number().optional().describe("Width of the card"),
+        size_y: z.number().optional().describe("Height of the card"),
         row: z.number().optional().describe("Row position"),
         col: z.number().optional().describe("Column position"),
-        series: z.array(z.object({})).optional().describe("Series data"),
-      })).describe("Array of card configurations"),
+        series: z.array(z.object({}).passthrough()).optional().describe("Series data"),
+      }).passthrough()).describe("Array of card configurations"),
     }),
     execute: async (args: { dashboard_id: number; cards: any[] }) => {
       try {

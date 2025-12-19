@@ -82,7 +82,7 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
       }).passthrough().describe("Database connection details"),
       is_full_sync: z.boolean().optional().describe("Whether to perform full sync"),
       is_on_demand: z.boolean().optional().describe("Whether database is on-demand"),
-      schedules: z.object({}).optional().describe("Sync schedules"),
+      schedules: z.object({}).passthrough().optional().describe("Sync schedules"),
     }),
     execute: async (args: { engine: string; name: string; details: any; is_full_sync?: boolean; is_on_demand?: boolean; schedules?: any }) => {
       try {
@@ -118,10 +118,10 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
       database_id: z.number().describe("The ID of the database to update"),
       name: z.string().optional().describe("New display name for the database"),
       engine: z.string().optional().describe("Database engine type"),
-      details: z.object({}).optional().describe("Updated database connection details"),
+      details: z.object({}).passthrough().optional().describe("Updated database connection details"),
       is_full_sync: z.boolean().optional().describe("Whether to perform full sync"),
       is_on_demand: z.boolean().optional().describe("Whether database is on-demand"),
-      schedules: z.object({}).optional().describe("Updated sync schedules"),
+      schedules: z.object({}).passthrough().optional().describe("Updated sync schedules"),
     }),
     execute: async (args: { database_id: number; [key: string]: any }) => {
       try {

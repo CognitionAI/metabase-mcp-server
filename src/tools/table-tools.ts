@@ -54,7 +54,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       ids: z.array(z.number()).describe("IDs of tables to update"),
-      updates: z.object({}).describe("Update payload applied to all tables"),
+      updates: z.object({}).passthrough().describe("Update payload applied to all tables"),
     }),
     execute: async (args: { ids: number[]; updates: any }) => {
       try {
@@ -142,7 +142,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
-      updates: z.object({}).describe("Fields to update"),
+      updates: z.object({}).passthrough().describe("Fields to update"),
     }),
     execute: async (args: { table_id: number; updates: any }) => {
       try {
