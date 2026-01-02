@@ -65,15 +65,15 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
 
   /**
    * Create a new Metabase card
-   * 
+   *
    * Creates a new card with custom query, visualization type,
    * and settings. Use this to programmatically build new analytical cards,
    * dashboard charts, or data exploration queries.
-   * 
+   *
    * @param {string} name - Card name
    * @param {string} [description] - Optional description
-   * @param {object} [dataset_query] - Dataset query object
-   * @param {string} [display] - Visualization type
+   * @param {object} dataset_query - Dataset query object (required)
+   * @param {string} display - Visualization type (required)
    * @param {object} [visualization_settings] - Chart-specific settings
    * @param {number} [collection_id] - Collection to save the card in
    * @returns {Promise<string>} JSON string of created card object
@@ -86,24 +86,62 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       .object({
         name: z.string().describe("Card name"),
         description: z.string().optional().describe("Description"),
-        dataset_query: z.object({}).passthrough().optional().describe("Dataset query object"),
-        display: z.string().optional().describe("Visualization type"),
+        dataset_query: z.object({
+          database: z.number().describe("Database ID"),
+          type: z.enum(["native", "query"]).describe("Query type: 'native' for SQL, 'query' for MBQL"),
+          native: z.object({
+            query: z.string().describe("SQL query string"),
+          }).optional().describe("Native SQL query (required if type is 'native')"),
+          query: z.object({}).passthrough().optional().describe("MBQL query object (required if type is 'query')"),
+        }).passthrough().describe("Dataset query object defining what data to fetch"),
+        display: z.string().describe("Visualization type (e.g., 'table', 'bar', 'line', 'pie')"),
         visualization_settings: z
           .object({})
           .passthrough()
           .optional()
           .describe("Visualization settings"),
         collection_id: z.number().optional().describe("Collection to save in"),
-      })
-      .passthrough(),
+      }),
     execute: async (args: any) => {
       try {
-        const card = await metabaseClient.createCard(args);
+        // Build a clean payload with only valid Metabase card fields
+        // This prevents LLMs from accidentally passing extra fields that could break the API
+        const cardPayload: Record<string, any> = {
+          name: args.name,
+          dataset_query: args.dataset_query,
+          display: args.display,
+          visualization_settings: args.visualization_settings ?? {},
+        };
+
+        // Add optional fields only if provided
+        if (args.description !== undefined) {
+          cardPayload.description = args.description;
+        }
+        if (args.collection_id !== undefined) {
+          cardPayload.collection_id = args.collection_id;
+        }
+
+        const card = await metabaseClient.createCard(cardPayload);
         return JSON.stringify(card, null, 2);
       } catch (error) {
-        throw new Error(
-          `Failed to create card: ${error instanceof Error ? error.message : "Unknown error"}`
-        );
+        // Extract detailed error message from Metabase API response
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+          // Check if it's an axios error with response data
+          const axiosError = error as any;
+          if (axiosError.response?.data) {
+            const data = axiosError.response.data;
+            if (typeof data === "object" && data.message) {
+              errorMessage = `${axiosError.response.status}: ${data.message}`;
+            } else if (typeof data === "string") {
+              errorMessage = `${axiosError.response.status}: ${data}`;
+            } else {
+              errorMessage = `${axiosError.response.status}: ${JSON.stringify(data)}`;
+            }
+          }
+        }
+        throw new Error(`Failed to create card: ${errorMessage}`);
       }
     },
   });
