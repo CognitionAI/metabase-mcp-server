@@ -47,7 +47,7 @@
     "docker:compose": "docker-compose up"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.6.1",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "abort-controller": "^3.0.0",
     "axios": "^1.8.2",
     "cors": "^2.8.5",
