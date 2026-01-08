@@ -209,33 +209,56 @@ export class MetabaseClient {
     // Get current dashboard to preserve existing state
     const dashboard = await this.getDashboard(dashboardId);
     const existingDashcards = (dashboard as any).dashcards || [];
+    const existingTabs = (dashboard as any).tabs || [];
     
-    // Calculate position for new card (one card per row, full width)
+    // Calculate default position for new card
     const cardWidth = 12;
     const cardHeight = 8;
-    const nextPosition = existingDashcards.length;
-    const row = nextPosition * cardHeight; // Stack vertically
-    const col = 0; // Always start at left edge
 
-    // Create new dashcard entry with id: -1 for new cards (as per Metabase convention)
-    const newDashcard = {
+    // Build the new dashcard - use id: -1 for new cards per Metabase convention
+    const newDashcard: any = {
       id: -1,
-      card_id: cardData.cardId || cardData.card_id,
-      row: cardData.row !== undefined ? cardData.row : row,
-      col: cardData.col !== undefined ? cardData.col : col,
+      row: cardData.row !== undefined ? cardData.row : 0,
+      col: cardData.col !== undefined ? cardData.col : 0,
       size_x: cardData.size_x || cardData.sizeX || cardWidth,
       size_y: cardData.size_y || cardData.sizeY || cardHeight,
-      parameter_mappings: cardData.parameter_mappings || [],
-      series: cardData.series || []
+      series: cardData.series || [],
+      visualization_settings: cardData.visualization_settings || {},
+      parameter_mappings: cardData.parameter_mappings || []
     };
     
-    // Combine existing dashcards with new dashcard
-    const updatedDashcards = [...existingDashcards, newDashcard];
+    // Handle card_id - can be null for text/virtual cards
+    const cardId = cardData.cardId ?? cardData.card_id;
+    if (cardId !== undefined) {
+      newDashcard.card_id = cardId;
+    }
     
-    // Use PUT to update dashboard with new dashcards while preserving other properties
+    // Add dashboard_tab_id if provided (for dashboards with tabs)
+    if (cardData.dashboard_tab_id !== undefined) {
+      newDashcard.dashboard_tab_id = cardData.dashboard_tab_id;
+    }
+    
+    // Clean existing dashcards - remove nested 'card' object and other read-only fields
+    const cleanedExistingDashcards = existingDashcards.map((dc: any) => ({
+      id: dc.id,
+      card_id: dc.card_id,
+      row: dc.row,
+      col: dc.col,
+      size_x: dc.size_x,
+      size_y: dc.size_y,
+      series: dc.series || [],
+      visualization_settings: dc.visualization_settings || {},
+      parameter_mappings: dc.parameter_mappings || [],
+      ...(dc.dashboard_tab_id !== undefined && { dashboard_tab_id: dc.dashboard_tab_id })
+    }));
+    
+    // Combine existing dashcards with new dashcard
+    const updatedDashcards = [...cleanedExistingDashcards, newDashcard];
+    
+    // Use PUT /api/dashboard/:id with dashcards and tabs arrays
     const response = await this.axiosInstance.put(`/api/dashboard/${dashboardId}`, {
-      ...dashboard,
-      dashcards: updatedDashcards
+      dashcards: updatedDashcards,
+      tabs: existingTabs
     });
     return response.data;
   }
