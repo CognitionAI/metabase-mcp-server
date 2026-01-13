@@ -1,6 +1,30 @@
 import { z } from "zod";
 import { MetabaseClient } from "../client/metabase-client.js";
 
+// Schema for native SQL queries
+const nativeQuerySchema = z.object({
+  type: z.literal("native"),
+  database: z.number().describe("Database ID to query against"),
+  native: z.object({
+    query: z.string().describe("SQL query string"),
+    "template-tags": z.record(z.any()).optional().describe("Template tags for parameterized queries"),
+  }).passthrough(),
+}).passthrough();
+
+// Schema for MBQL (Metabase Query Language) queries
+const mbqlQuerySchema = z.object({
+  type: z.literal("query"),
+  database: z.number().describe("Database ID to query against"),
+  query: z.object({
+    "source-table": z.number().optional().describe("Source table ID"),
+  }).passthrough(),
+}).passthrough();
+
+// Combined dataset_query schema that accepts either native or MBQL queries
+const datasetQuerySchema = z.union([nativeQuerySchema, mbqlQuerySchema]).describe(
+  "Dataset query object. For native SQL: {type: 'native', database: <id>, native: {query: '<SQL>'}}. For MBQL: {type: 'query', database: <id>, query: {'source-table': <id>}}"
+);
+
 export function addCardTools(server: any, metabaseClient: MetabaseClient) {
 
   /**
@@ -72,28 +96,50 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
    * 
    * @param {string} name - Card name
    * @param {string} [description] - Optional description
-   * @param {object} [dataset_query] - Dataset query object
-   * @param {string} [display] - Visualization type
+   * @param {object} dataset_query - Dataset query object (required for functional cards)
+   * @param {string} [display] - Visualization type (table, bar, line, pie, etc.)
    * @param {object} [visualization_settings] - Chart-specific settings
    * @param {number} [collection_id] - Collection to save the card in
    * @returns {Promise<string>} JSON string of created card object
    */
   server.addTool({
     name: "create_card",
-    description: "Create a new Metabase card with custom query, visualization type, and settings - use this to programmatically build new analytical cards, dashboards charts, or data exploration queries",
+    description: `Create a new Metabase card with custom query, visualization type, and settings.
+
+For native SQL queries, use:
+  dataset_query: {
+    type: "native",
+    database: <database_id>,
+    native: {
+      query: "<your SQL query>",
+      "template-tags": {}
+    }
+  }
+
+For MBQL queries, use:
+  dataset_query: {
+    type: "query", 
+    database: <database_id>,
+    query: {
+      "source-table": <table_id>
+    }
+  }
+
+Display types: table, bar, line, area, row, pie, scalar, smartscalar, progress, gauge, funnel, map`,
     metadata: { isWrite: true },
     parameters: z
       .object({
         name: z.string().describe("Card name"),
         description: z.string().optional().describe("Description"),
-        dataset_query: z.object({}).passthrough().optional().describe("Dataset query object"),
-        display: z.string().optional().describe("Visualization type"),
+        dataset_query: datasetQuerySchema,
+        display: z.string().optional().default("table").describe("Visualization type (table, bar, line, pie, etc.)"),
         visualization_settings: z
           .object({})
           .passthrough()
           .optional()
+          .default({})
           .describe("Visualization settings"),
-        collection_id: z.number().optional().describe("Collection to save in"),
+        collection_id: z.number().optional().describe("Collection to save in (null for root)"),
       })
       .passthrough(),
     execute: async (args: any) => {
