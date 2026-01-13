@@ -23,7 +23,7 @@ const metabaseClient = new MetabaseClient(config);
 // Create FastMCP server
 const server = new FastMCP({
   name: "metabase-server",
-  version: "2.0.0",
+  version: "2.0.1",
 });
 
 // Override addTool to apply filtering
@@ -39,12 +39,8 @@ server.addTool = function(toolConfig: any) {
       if (!isEssential) return;
       break;
     case 'write':
-      // Only load write tools
-      if (!isWrite) return;
-      break;
-    case 'read':
-      // Only load read-only tools
-      if (!isRead) return;
+      // Load read and write tools
+      if (!isRead && !isWrite) return;
       break;
     case 'all':
       // Load all tools - no filtering
@@ -70,10 +66,7 @@ switch (filterOptions.mode) {
     console.error(`INFO: Only essential tools loaded. Use --all to load all tools.`);
     break;
   case 'write':
-    console.error(`INFO: Only write/modification tools loaded.`);
-    break;
-  case 'read':
-    console.error(`INFO: Only read-only tools loaded.`);
+    console.error(`INFO: Read and write tools loaded.`);
     break;
   case 'all':
     console.error(`INFO: All tools loaded.`);

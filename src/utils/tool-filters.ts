@@ -1,9 +1,9 @@
 /**
- * Tool filtering utilities for --write, --essential, --all, and --read flags
+ * Tool filtering utilities for --write, --essential, and --all flags
  */
 
 export interface ToolFilterOptions {
-  mode: 'essential' | 'all' | 'write' | 'read';
+  mode: 'essential' | 'all' | 'write';
 }
 
 /**
@@ -19,9 +19,6 @@ export function parseToolFilterOptions(): ToolFilterOptions {
   }
   if (args.includes('--write')) {
     return { mode: 'write' };
-  }
-  if (args.includes('--read')) {
-    return { mode: 'read' };
   }
   if (args.includes('--essential')) {
     return { mode: 'essential' };
