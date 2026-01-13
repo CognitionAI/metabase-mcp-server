@@ -26,15 +26,6 @@ npx @cognitionai/metabase-mcp-server
 - **📋 Table Management** (16 tools) - Metadata operations, field management, data operations
 - **🔍 Additional Tools** (9 tools) - Collections, search, users, activity tracking, playground links
 
-### 🔗 MCP Resources
-
-Access Metabase entities via standardized URIs:
-- `metabase://dashboards` - All dashboards
-- `metabase://cards` - All cards/questions
-- `metabase://databases` - All database connections
-- `metabase://collections` - All collections
-- `metabase://users` - All users
-
 ## 📦 Installation
 
 > **💡 Recommended:** Node.js 20.19.0+ and npm 8.0.0+ for optimal compatibility

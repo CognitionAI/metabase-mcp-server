@@ -109,7 +109,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     name: "get_dashboard_related",
     description:
       "Retrieve entities related to a Metabase dashboard - use this to discover related content, find similar analytical views, or understand dashboard relationships",
-    metadata: { isEssential: true, isRead: true },
+    metadata: { isRead: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }),
@@ -143,7 +143,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     name: "get_dashboard_revisions",
     description:
       "Retrieve revision history for a Metabase dashboard - use this to track dashboard evolution, review past changes, or restore previous versions",
-    metadata: { isEssential: true, isRead: true },
+    metadata: { isRead: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }),
@@ -1035,7 +1035,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
    */
   server.addTool({
     name: "search_dashboards",
-    metadata: { isRead: true },
+    metadata: { isEssential: true, isRead: true },
     description:
       "Search dashboards by name or description text - use this to find specific dashboards or discover related analytical content",
     parameters: z.object({

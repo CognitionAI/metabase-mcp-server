@@ -264,7 +264,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
   server.addTool({
     name: "list_users",
     description: "Retrieve all Metabase users with their roles and permissions - use this to understand user access, manage permissions, or audit accounts",
-    metadata: { isEssential: true, isRead: true },
+    metadata: { isRead: true },
     parameters: z.object({
       include_deactivated: z.boolean().optional().default(false).describe("Include deactivated users"),
     }),

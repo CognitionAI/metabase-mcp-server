@@ -377,6 +377,7 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
   server.addTool({
     name: "sync_database_schema",
     description: "Initiate schema sync to update Metabase metadata cache - use this after database changes to recognize new tables, columns, or relationships",
+    metadata: { isWrite: true },
     parameters: z.object({
       database_id: z.number().describe("The ID of the database to sync"),
     }),

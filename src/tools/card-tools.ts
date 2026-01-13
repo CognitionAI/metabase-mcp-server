@@ -261,7 +261,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
   server.addTool({
     name: "export_card_result",
     description: "Execute a Metabase card and export the results in a specific format (CSV, Excel, JSON, etc.) - use this to download data for external analysis, create reports for stakeholders, or integrate query results with other systems",
-    metadata: { isEssential: true },
+    metadata: { isRead: true },
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
       export_format: z.string().describe("Export format (e.g., csv, xlsx, json)"),
