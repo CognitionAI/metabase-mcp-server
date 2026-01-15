@@ -21,7 +21,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       f: z.string().optional().describe("Filter by source (e.g., 'models')"),
       model_id: z.number().optional().describe("Filter by model_id"),
-    }),
+    }).strict(),
     execute: async (args: { f?: string; model_id?: number } = {}) => {
       try {
         const cards = await metabaseClient.getCards(args);
@@ -50,7 +50,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isEssential: true, isRead: true },
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const card = await metabaseClient.getCard(args.card_id);
@@ -82,20 +82,19 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     name: "create_card",
     description: "Create a new Metabase card with custom query, visualization type, and settings - use this to programmatically build new analytical cards, dashboards charts, or data exploration queries",
     metadata: { isWrite: true },
-    parameters: z
-      .object({
-        name: z.string().describe("Card name"),
-        description: z.string().optional().describe("Description"),
-        dataset_query: z.object({}).passthrough().optional().describe("Dataset query object"),
-        display: z.string().optional().describe("Visualization type"),
-        visualization_settings: z
-          .object({})
-          .passthrough()
-          .optional()
-          .describe("Visualization settings"),
-        collection_id: z.number().optional().describe("Collection to save in"),
-      })
-      .passthrough(),
+    parameters: z.object({
+      name: z.string().describe("Card name"),
+      description: z.string().optional().describe("Description"),
+      dataset_query: z.object({}).passthrough().optional().describe("Dataset query object"),
+      display: z.string().optional().describe("Visualization type"),
+      visualization_settings: z
+        .object({})
+        .passthrough()
+        .optional()
+        .describe("Visualization settings"),
+      collection_id: z.number().optional().describe("Collection to save in"),
+      database_id: z.number().optional().describe("Database ID"),
+    }).strict(),
     execute: async (args: any) => {
       try {
         const card = await metabaseClient.createCard(args);
@@ -132,7 +131,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
         .passthrough()
         .optional()
         .describe("Optional query parameters for update"),
-    }),
+    }).strict(),
     execute: async (args: {
       card_id: number;
       updates: any;
@@ -174,7 +173,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
         .optional()
         .default(false)
         .describe("Hard delete if true, else archive"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number; hard_delete?: boolean }) => {
       try {
         await metabaseClient.deleteCard(args.card_id, args.hard_delete || false);
@@ -224,7 +223,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
         .number()
         .optional()
         .describe("Execute within a dashboard context"),
-    }),
+    }).strict(),
     execute: async (args: {
       card_id: number;
       ignore_cache?: boolean;
@@ -266,7 +265,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: z.number().describe("Card ID"),
       export_format: z.string().describe("Export format (e.g., csv, xlsx, json)"),
       parameters: z.object({}).passthrough().optional().describe("Execution parameters"),
-    }),
+    }).strict(),
     execute: async (args: {
       card_id: number;
       export_format: string;
@@ -305,7 +304,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const result = await metabaseClient.copyCard(args.card_id);
@@ -336,7 +335,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isEssential: true, isRead: true },
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const result = await metabaseClient.getCardDashboards(args.card_id);
@@ -393,7 +392,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     description: "Generate a publicly accessible URL for a Metabase card that can be viewed without authentication (requires admin privileges) - use this to share analytical insights with external stakeholders, create public reports, or embed charts in websites",
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const result = await metabaseClient.createCardPublicLink(args.card_id);
@@ -423,7 +422,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     description: "Remove public access to a Metabase card by deleting its public URL (requires admin privileges) - use this to revoke external access to sensitive data, clean up unused public links, or update security permissions",
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const result = await metabaseClient.deleteCardPublicLink(args.card_id);
@@ -485,7 +484,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_ids: z.array(z.number()).describe("Card IDs to move"),
       collection_id: z.number().optional().describe("Target collection ID"),
       dashboard_id: z.number().optional().describe("Target dashboard ID"),
-    }),
+    }).strict(),
     execute: async (args: {
       card_ids: number[];
       collection_id?: number;
@@ -526,7 +525,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_ids: z.array(z.number()).describe("Card IDs to move"),
       collection_id: z.number().optional().describe("Target collection ID"),
-    }),
+    }).strict(),
     execute: async (args: { card_ids: number[]; collection_id?: number }) => {
       try {
         const result = await metabaseClient.moveCardsToCollection(
@@ -561,7 +560,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
       parameters: z.object({}).passthrough().optional().describe("Execution parameters"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number; parameters?: any }) => {
       try {
         const result = await metabaseClient.executePivotCardQuery(
@@ -597,7 +596,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
       param_key: z.string().describe("Parameter key"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number; param_key: string }) => {
       try {
         const result = await metabaseClient.getCardParamValues(
@@ -635,7 +634,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: z.number().describe("Card ID"),
       param_key: z.string().describe("Parameter key"),
       query: z.string().describe("Search query"),
-    }),
+    }).strict(),
     execute: async (args: {
       card_id: number;
       param_key: string;
@@ -677,7 +676,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: z.number().describe("Card ID"),
       param_key: z.string().describe("Parameter key"),
       value: z.string().describe("Parameter value to remap"),
-    }),
+    }).strict(),
     execute: async (args: {
       card_id: number;
       param_key: string;
@@ -715,7 +714,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     description: "Retrieve structural metadata about a Metabase card's underlying query including column types, field information, and data schema - use this to understand card structure, validate data types, or build dynamic interfaces",
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const result = await metabaseClient.getCardQueryMetadata(args.card_id);
@@ -757,7 +756,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
         .array(z.number())
         .optional()
         .describe("IDs to exclude"),
-    }),
+    }).strict(),
     execute: async (args: {
       card_id: number;
       last_cursor?: string | number;

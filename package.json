@@ -1,6 +1,6 @@
 {
   "name": "@cognitionai/metabase-mcp-server",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "A Model Context Protocol server for Metabase integration",
   "author": "Cognition <devin@cognition.ai>",
   "license": "MIT",

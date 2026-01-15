@@ -19,7 +19,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     metadata: { isEssential: true, isRead: true },
     parameters: z.object({
       collection_id: z.number().describe("Collection ID"),
-    }),
+    }).strict(),
     execute: async (args: { collection_id: number }) => {
       try {
         const result = await metabaseClient.apiCall(
@@ -59,7 +59,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
       collection_id: z
         .union([z.number(), z.null()])
         .describe("Target collection ID (null for root)"),
-    }),
+    }).strict(),
     execute: async (args: {
       item_type: "card" | "dashboard";
       item_id: number;
@@ -98,11 +98,14 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     name: "search_content",
     description: "Search across all Metabase content including cards, dashboards, collections, and models - use this to find specific content, discover assets, or explore analytical resources",
     metadata: { isEssential: true, isRead: true },
-    parameters: z
-      .object({
-        q: z.string().min(1).describe("Search query"),
-      })
-      .passthrough(),
+    parameters: z.object({
+      q: z.string().min(1).describe("Search query"),
+      type: z.string().optional().describe("Filter by type (card, dashboard, collection, table, etc.)"),
+      models: z.array(z.string()).optional().describe("Filter by model types"),
+      archived: z.boolean().optional().describe("Include archived items"),
+      table_db_id: z.number().optional().describe("Filter by database ID"),
+      limit: z.number().optional().describe("Maximum number of results"),
+    }).strict(),
     execute: async (args: any) => {
       try {
         const { q, ...other } = args;
@@ -140,7 +143,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     metadata: { isEssential: true, isRead: true },
     parameters: z.object({
       archived: z.boolean().optional().default(false).describe("Include archived collections"),
-    }),
+    }).strict(),
     execute: async (args: { archived?: boolean } = {}) => {
       try {
         const collections = await metabaseClient.getCollections(args.archived || false);
@@ -173,7 +176,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
       description: z.string().optional().describe("Description of the collection"),
       parent_id: z.number().optional().describe("Parent collection ID for nested organization"),
       color: z.string().optional().describe("Color for the collection (hex code)"),
-    }),
+    }).strict(),
     execute: async (args: { name: string; description?: string; parent_id?: number; color?: string }) => {
       try {
         const collection = await metabaseClient.createCollection(args);
@@ -208,7 +211,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
       description: z.string().optional().describe("New description for the collection"),
       parent_id: z.number().optional().describe("New parent collection ID"),
       color: z.string().optional().describe("New color for the collection"),
-    }),
+    }).strict(),
     execute: async (args: { collection_id: number; name?: string; description?: string; parent_id?: number; color?: string }) => {
       try {
         const { collection_id, ...updates } = args;
@@ -236,7 +239,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     metadata: { isWrite: true },
     parameters: z.object({
       collection_id: z.number().describe("The ID of the collection to delete"),
-    }),
+    }).strict(),
     execute: async (args: { collection_id: number }) => {
       try {
         await metabaseClient.deleteCollection(args.collection_id);
@@ -267,7 +270,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     metadata: { isRead: true },
     parameters: z.object({
       include_deactivated: z.boolean().optional().default(false).describe("Include deactivated users"),
-    }),
+    }).strict(),
     execute: async (args: { include_deactivated?: boolean } = {}) => {
       try {
         const users = await metabaseClient.getUsers(args.include_deactivated || false);
@@ -295,7 +298,7 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     parameters: z.object({
       query: z.string().describe("The SQL query to execute in the playground"),
       display: z.string().optional().default("table").describe("Display type (table, bar, line, etc.)"),
-    }),
+    }).strict(),
     execute: async (args: { query: string; display?: string }) => {
       try {
         const payload = {

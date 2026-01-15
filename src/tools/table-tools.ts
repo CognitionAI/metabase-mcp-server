@@ -22,7 +22,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
         .array(z.number())
         .optional()
         .describe("Optional list of table IDs to filter by"),
-    }),
+    }).strict(),
     execute: async (args: { ids?: number[] } = {}) => {
       try {
         const result = await metabaseClient.getTables(args.ids);
@@ -55,7 +55,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       ids: z.array(z.number()).describe("IDs of tables to update"),
       updates: z.object({}).passthrough().describe("Update payload applied to all tables"),
-    }),
+    }).strict(),
     execute: async (args: { ids: number[]; updates: any }) => {
       try {
         const result = await metabaseClient.updateTables(args.ids, args.updates);
@@ -101,7 +101,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
         .boolean()
         .optional()
         .describe("Include editable data model"),
-    }),
+    }).strict(),
     execute: async (args: {
       table_id: number;
       include_sensitive_fields?: boolean;
@@ -143,7 +143,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
       updates: z.object({}).passthrough().describe("Fields to update"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number; updates: any }) => {
       try {
         const result = await metabaseClient.updateTable(
@@ -176,7 +176,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Retrieve foreign key relationships for a table - use this to understand data connections, build joins, or explore table dependencies",
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number }) => {
       try {
         const result = await metabaseClient.getTableFks(args.table_id);
@@ -212,7 +212,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       include_sensitive_fields: z.boolean().optional(),
       include_hidden_fields: z.boolean().optional(),
       include_editable_data_model: z.boolean().optional(),
-    }),
+    }).strict(),
     execute: async (args: {
       table_id: number;
       include_sensitive_fields?: boolean;
@@ -254,7 +254,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Find tables and entities related through relationships or schemas - use this to discover connected data, find related content, or understand context",
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number }) => {
       try {
         const result = await metabaseClient.getTableRelated(args.table_id);
@@ -284,7 +284,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Retrieve foreign keys for a card's virtual table - use this to understand relationships in card-based queries or saved question tables",
     parameters: z.object({
       card_id: z.number().describe("Card ID for the virtual table"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const result = await metabaseClient.getCardTableFks(args.card_id);
@@ -314,7 +314,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Retrieve query metadata for a card's virtual table - use this to build queries on top of saved questions or treat cards as queryable tables",
     parameters: z.object({
       card_id: z.number().describe("Card ID for the virtual table"),
-    }),
+    }).strict(),
     execute: async (args: { card_id: number }) => {
       try {
         const result = await metabaseClient.getCardTableQueryMetadata(
@@ -350,7 +350,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       table_id: z.number().describe("Table ID"),
       filename: z.string().describe("CSV filename (for metadata only)"),
       file_content: z.string().describe("CSV file content as string"),
-    }),
+    }).strict(),
     execute: async (args: {
       table_id: number;
       filename: string;
@@ -388,7 +388,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Clear cached field values to force fresh data loading - use this when table data has changed or cached values are stale",
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number }) => {
       try {
         const result = await metabaseClient.discardTableFieldValues(
@@ -425,7 +425,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       field_order: z
         .array(z.number())
         .describe("Array of field IDs in desired order"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number; field_order: number[] }) => {
       try {
         const result = await metabaseClient.reorderTableFields(
@@ -460,7 +460,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
       csv_file: z.string().describe("CSV file content as string"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number; csv_file: string }) => {
       try {
         const result = await metabaseClient.replaceTableCsv(
@@ -493,7 +493,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Trigger rescan to refresh field values cache with current data - use this to update dropdown options, statistics, or filter values",
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number }) => {
       try {
         const result = await metabaseClient.rescanTableFieldValues(
@@ -525,7 +525,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Initiate schema sync for specific table to update metadata - use this when table structure has changed and needs recognition",
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number }) => {
       try {
         const result = await metabaseClient.syncTableSchema(args.table_id);
@@ -562,7 +562,7 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
       limit: z.number().optional().describe("Row limit (default 1000)"),
-    }),
+    }).strict(),
     execute: async (args: { table_id: number; limit?: number }) => {
       try {
         const result = await metabaseClient.getTableData(

@@ -47,7 +47,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isEssential: true, isRead: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard to retrieve"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
@@ -79,11 +79,11 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isEssential: true, isRead: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
-        const cards = dashboard.cards || [];
+        const cards = dashboard.dashcards || [];
         return JSON.stringify(cards, null, 2);
       } catch (error) {
         throw new Error(
@@ -112,7 +112,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isRead: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         const result = await metabaseClient.getDashboardRelatedEntities(
@@ -146,7 +146,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isRead: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         const result = await metabaseClient.getDashboardRevisions(
@@ -254,7 +254,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .number()
         .optional()
         .describe("Position within the collection"),
-    }),
+    }).strict(),
     execute: async (args: {
       name: string;
       description?: string;
@@ -292,7 +292,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         const result = await metabaseClient.createDashboardPublicLink(
@@ -344,7 +344,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .number()
         .optional()
         .describe("Position within the collection"),
-    }),
+    }).strict(),
     execute: async (args: {
       from_dashboard_id: number;
       name?: string;
@@ -420,7 +420,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .array(z.object({}).passthrough())
         .optional()
         .describe("Series data for the card"),
-    }),
+    }).strict(),
     execute: async (args: {
       dashboard_id: number;
       cardId?: number | null;
@@ -487,7 +487,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       col: z.number().optional().default(0).describe("Column position"),
       size_x: z.number().optional().default(18).describe("Width of the text block"),
       size_y: z.number().optional().describe("Height of the text block"),
-    }),
+    }).strict(),
     execute: async (args: {
       dashboard_id: number;
       text: string;
@@ -551,7 +551,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       "Mark a dashboard as favorite for quick access - use this to bookmark frequently accessed analytical views",
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         const result = await metabaseClient.favoriteDashboard(
@@ -587,7 +587,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
       revision_id: z.number().describe("The revision ID to revert to"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number; revision_id: number }) => {
       try {
         const result = await metabaseClient.revertDashboard(
@@ -625,7 +625,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .object({})
         .passthrough()
         .describe("Dashboard object to save"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard: any }) => {
       try {
         const result = await metabaseClient.saveDashboard(args.dashboard);
@@ -662,7 +662,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .object({})
         .passthrough()
         .describe("Dashboard object to save"),
-    }),
+    }).strict(),
     execute: async (args: { parent_collection_id: number; dashboard: any }) => {
       try {
         const result = await metabaseClient.saveDashboardToCollection(
@@ -740,7 +740,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .optional()
         .describe("Embedding parameters"),
       position: z.number().optional().describe("Dashboard position"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number; [key: string]: any }) => {
       try {
         const { dashboard_id, ...updates } = args;
@@ -800,7 +800,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
             .passthrough()
         )
         .describe("Array of card configurations"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number; cards: any[] }) => {
       try {
         const result = await metabaseClient.updateDashboardCards(
@@ -841,7 +841,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .optional()
         .default(false)
         .describe("Whether to permanently delete (true) or archive (false)"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number; hard_delete?: boolean }) => {
       try {
         await metabaseClient.deleteDashboard(
@@ -884,7 +884,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         await metabaseClient.deleteDashboardPublicLink(args.dashboard_id);
@@ -926,7 +926,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
       card_ids: z.array(z.number()).describe("Array of card IDs to remove"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number; card_ids: number[] }) => {
       try {
         const result = await metabaseClient.removeCardsFromDashboard(
@@ -960,7 +960,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       "Remove a dashboard from the user's favorites list - use this to clean up bookmarked dashboards",
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number }) => {
       try {
         const result = await metabaseClient.unfavoriteDashboard(
@@ -998,7 +998,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .number()
         .describe("The ID of the dashboard containing the card"),
       card_id: z.number().describe("The ID of the card to execute"),
-    }),
+    }).strict(),
     execute: async (args: { dashboard_id: number; card_id: number }) => {
       try {
         const result = await metabaseClient.executeCard(args.card_id);
@@ -1044,7 +1044,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .number()
         .optional()
         .describe("Maximum number of results to return"),
-    }),
+    }).strict(),
     execute: async (args: { query: string; limit?: number }) => {
       try {
         const dashboards = await metabaseClient.getDashboards();
