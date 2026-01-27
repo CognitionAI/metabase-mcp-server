@@ -6,16 +6,14 @@
 import axios, { AxiosInstance } from "axios";
 import { ErrorCode, McpError } from "../types/errors.js";
 import {
-  MetabaseConfig,
-  Dashboard,
-  Card,
-  Database,
-  Collection,
-  User,
-  Table,
-  Field,
-  PermissionGroup,
-  QueryResult,
+    Card,
+    Collection,
+    Dashboard,
+    Database,
+    MetabaseConfig,
+    PermissionGroup,
+    QueryResult,
+    User
 } from "../types/metabase.js";
 
 export class MetabaseClient {
@@ -275,14 +273,14 @@ export class MetabaseClient {
     return response.data;
   }
 
-  async removeCardsFromDashboard(dashboardId: number, cardIds: number[]): Promise<any> {
+  async removeCardsFromDashboard(dashboardId: number, dashcardIds: number[]): Promise<any> {
     // Get current dashboard to preserve existing properties
     const dashboard = await this.getDashboard(dashboardId);
     const existingDashcards = (dashboard as any).dashcards || [];
     
-    // Filter out the cards to be removed
+    // Filter out the dashcards to be removed by their dashcard id (not card_id)
     const filteredDashcards = existingDashcards.filter((dashcard: any) => 
-      !cardIds.includes(dashcard.card_id)
+      !dashcardIds.includes(dashcard.id)
     );
     
     // Update dashboard with filtered dashcards while preserving other properties

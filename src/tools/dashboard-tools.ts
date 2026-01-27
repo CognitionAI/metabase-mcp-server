@@ -413,9 +413,9 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .optional()
         .describe("Visualization settings (required for text cards)"),
       parameter_mappings: z
-        .array(z.object({}).passthrough())
+        .array(z.any())
         .optional()
-        .describe("Parameter mappings for the card"),
+        .describe("Parameter mappings for the card - fully preserved including nested arrays like target"),
       series: z
         .array(z.object({}).passthrough())
         .optional()
@@ -921,17 +921,17 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
   server.addTool({
     name: "remove_cards_from_dashboard",
     description:
-      "Remove specific cards from a dashboard by their IDs - use this to clean up dashboards or reorganize content",
+      "Remove specific dashcards from a dashboard by their dashcard IDs (not card_id) - use this to clean up dashboards or reorganize content",
     metadata: { isWrite: true },
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
-      card_ids: z.array(z.number()).describe("Array of card IDs to remove"),
+      dashcard_ids: z.array(z.number()).describe("Array of dashcard IDs to remove (the 'id' field from dashcards, not 'card_id')"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; card_ids: number[] }) => {
+    execute: async (args: { dashboard_id: number; dashcard_ids: number[] }) => {
       try {
         const result = await metabaseClient.removeCardsFromDashboard(
           args.dashboard_id,
-          args.card_ids
+          args.dashcard_ids
         );
         return JSON.stringify(result, null, 2);
       } catch (error) {
