@@ -3,6 +3,10 @@ import { MetabaseClient } from "../client/metabase-client.js";
 
 export function addTableTools(server: any, metabaseClient: MetabaseClient) {
 
+  // Metabase API reference (OpenAPI):
+  // - Hosted: https://www.metabase.com/docs/latest/api.json
+  // - Your instance: https://[your-metabase-url]/api/docs
+
   /**
    * List all available tables
    * 
@@ -53,12 +57,38 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     description: "Bulk update multiple Metabase tables with same configuration - use this to apply consistent settings, update metadata, or modify table properties efficiently",
     metadata: { isWrite: true },
     parameters: z.object({
-      ids: z.array(z.number()).describe("IDs of tables to update"),
-      updates: z.object({}).passthrough().describe("Update payload applied to all tables"),
+      ids: z.array(z.number().int().min(1)).describe("IDs of tables to update"),
+      display_name: z.string().min(1).optional().describe("New display name for the tables"),
+      description: z.string().optional().describe("New description"),
+      caveats: z.string().optional().describe("Caveats"),
+      points_of_interest: z.string().optional().describe("Points of interest"),
+      visibility_type: z.enum(["technical", "hidden", "cruft"]).optional().describe("Table visibility type"),
+      data_authority: z.any().optional().describe("Data authority settings (see Metabase OpenAPI spec)"),
+      data_layer: z.string().optional().describe("Data layer"),
+      data_source: z.string().optional().describe("Data source"),
+      owner_email: z.string().optional().describe("Owner email"),
+      owner_user_id: z.number().int().optional().describe("Owner user ID"),
+      show_in_getting_started: z.boolean().optional().describe("Show table in getting started"),
+      entity_type: z.string().optional().describe("Entity type"),
     }).strict(),
-    execute: async (args: { ids: number[]; updates: any }) => {
+    execute: async (args: {
+      ids: number[];
+      display_name?: string;
+      description?: string;
+      caveats?: string;
+      points_of_interest?: string;
+      visibility_type?: "technical" | "hidden" | "cruft";
+      data_authority?: any;
+      data_layer?: string;
+      data_source?: string;
+      owner_email?: string;
+      owner_user_id?: number;
+      show_in_getting_started?: boolean;
+      entity_type?: string;
+    }) => {
       try {
-        const result = await metabaseClient.updateTables(args.ids, args.updates);
+        const { ids, ...updates } = args;
+        const result = await metabaseClient.updateTables(ids, updates);
         return JSON.stringify(result, null, 2);
       } catch (error) {
         throw new Error(
@@ -142,14 +172,39 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isWrite: true },
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
-      updates: z.object({}).passthrough().describe("Fields to update"),
+      display_name: z.string().min(1).optional().describe("New display name"),
+      description: z.string().optional().describe("New description"),
+      caveats: z.string().optional().describe("Caveats"),
+      points_of_interest: z.string().optional().describe("Points of interest"),
+      visibility_type: z.enum(["technical", "hidden", "cruft"]).optional().describe("Table visibility type"),
+      field_order: z.enum(["alphabetical", "custom", "database", "smart"]).optional().describe("Field ordering"),
+      data_authority: z.any().optional().describe("Data authority settings (see Metabase OpenAPI spec)"),
+      data_layer: z.string().optional().describe("Data layer"),
+      data_source: z.string().optional().describe("Data source"),
+      owner_email: z.string().optional().describe("Owner email"),
+      owner_user_id: z.number().int().optional().describe("Owner user ID"),
+      show_in_getting_started: z.boolean().optional().describe("Show table in getting started"),
+      entity_type: z.string().optional().describe("Entity type"),
     }).strict(),
-    execute: async (args: { table_id: number; updates: any }) => {
+    execute: async (args: {
+      table_id: number;
+      display_name?: string;
+      description?: string;
+      caveats?: string;
+      points_of_interest?: string;
+      visibility_type?: "technical" | "hidden" | "cruft";
+      field_order?: "alphabetical" | "custom" | "database" | "smart";
+      data_authority?: any;
+      data_layer?: string;
+      data_source?: string;
+      owner_email?: string;
+      owner_user_id?: number;
+      show_in_getting_started?: boolean;
+      entity_type?: string;
+    }) => {
       try {
-        const result = await metabaseClient.updateTable(
-          args.table_id,
-          args.updates
-        );
+        const { table_id, ...updates } = args;
+        const result = await metabaseClient.updateTable(table_id, updates);
         return JSON.stringify(result, null, 2);
       } catch (error) {
         throw new Error(
@@ -573,6 +628,42 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       } catch (error) {
         throw new Error(
           `Failed to fetch data for table ${args.table_id}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    },
+  });
+
+  /**
+   * Look up a field's ID by table and column name
+   * 
+   * Finds a field's ID and metadata by searching for a column name within a table.
+   * Essential for building parameter mappings where you need field IDs.
+   * Searches both the internal name and display_name.
+   * 
+   * @param {number} table_id - The ID of the table
+   * @param {string} column_name - The column name to search for
+   * @returns {Promise<string>} JSON string with field_id, name, base_type, and other metadata
+   */
+  server.addTool({
+    name: "get_field_id",
+    description: "Look up a field's ID and metadata by table and column name - essential for building parameter mappings. Returns field_id, base_type, and other metadata needed for filter connections.",
+    metadata: { isRead: true, isEssential: true },
+    parameters: z.object({
+      table_id: z.number().describe("Table ID to search in"),
+      column_name: z.string().describe("Column name to look up (searches both name and display_name)"),
+    }).strict(),
+    execute: async (args: { table_id: number; column_name: string }) => {
+      try {
+        const result = await metabaseClient.getFieldByName(
+          args.table_id,
+          args.column_name
+        );
+        return JSON.stringify(result, null, 2);
+      } catch (error) {
+        throw new Error(
+          `Failed to find field '${args.column_name}' in table ${args.table_id}: ${
             error instanceof Error ? error.message : "Unknown error"
           }`
         );

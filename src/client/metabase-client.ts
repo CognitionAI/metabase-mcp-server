@@ -273,6 +273,34 @@ export class MetabaseClient {
     return response.data;
   }
 
+  async updateDashcard(dashboardId: number, dashcardId: number, updates: any): Promise<any> {
+    // Get current dashboard to preserve existing properties
+    const dashboard = await this.getDashboard(dashboardId);
+    const dashcards = (dashboard as any).dashcards || [];
+    
+    // Find and update only the specific dashcard
+    const updatedDashcards = dashcards.map((dc: any) => {
+      if (dc.id === dashcardId) {
+        // Merge updates into the existing dashcard
+        return { ...dc, ...updates };
+      }
+      return dc;
+    });
+    
+    // Verify the dashcard was found
+    const dashcardExists = dashcards.some((dc: any) => dc.id === dashcardId);
+    if (!dashcardExists) {
+      throw new Error(`Dashcard with id ${dashcardId} not found in dashboard ${dashboardId}`);
+    }
+    
+    // Update dashboard with modified dashcards
+    const response = await this.axiosInstance.put(`/api/dashboard/${dashboardId}`, {
+      ...dashboard,
+      dashcards: updatedDashcards
+    });
+    return response.data;
+  }
+
   async removeCardsFromDashboard(dashboardId: number, dashcardIds: number[]): Promise<any> {
     // Get current dashboard to preserve existing properties
     const dashboard = await this.getDashboard(dashboardId);
@@ -812,6 +840,36 @@ export class MetabaseClient {
     const url = params.toString() ? `/api/table/${id}/query_metadata?${params.toString()}` : `/api/table/${id}/query_metadata`;
     const response = await this.axiosInstance.get(url);
     return response.data;
+  }
+
+  async getFieldByName(tableId: number, columnName: string): Promise<any> {
+    const metadata = await this.getTableQueryMetadata(tableId);
+    const fields = metadata.fields || [];
+    
+    // Search by exact name match first, then display_name
+    const lowerColumnName = columnName.toLowerCase();
+    const field = fields.find((f: any) => 
+      f.name?.toLowerCase() === lowerColumnName || 
+      f.display_name?.toLowerCase() === lowerColumnName
+    );
+    
+    if (!field) {
+      // Provide helpful error with available field names
+      const availableFields = fields.map((f: any) => f.name).slice(0, 20);
+      throw new Error(
+        `Field '${columnName}' not found in table ${tableId}. ` +
+        `Available fields: ${availableFields.join(', ')}${fields.length > 20 ? '...' : ''}`
+      );
+    }
+    
+    return {
+      field_id: field.id,
+      name: field.name,
+      display_name: field.display_name,
+      base_type: field.base_type,
+      semantic_type: field.semantic_type,
+      table_id: tableId,
+    };
   }
 
   async getTableRelated(id: number): Promise<any> {

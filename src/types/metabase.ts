@@ -75,8 +75,23 @@ export interface Table {
   id: number;
   name: string;
   display_name?: string;
+  description?: string | null;
   database_id: number;
   schema?: string;
+  visibility_type?: TableVisibilityType;
+  field_order?: TableFieldOrder;
+}
+
+// From Metabase API: visibility_type is nullable enum of technical, hidden, cruft
+export type TableVisibilityType = 'technical' | 'hidden' | 'cruft';
+// field_order observed value: 'database'
+export type TableFieldOrder = 'database' | 'alphabetical' | 'custom' | 'smart';
+
+export interface TableUpdatePayload {
+  display_name?: string;
+  description?: string | null;
+  visibility_type?: TableVisibilityType;
+  field_order?: TableFieldOrder;
 }
 
 export interface Field {

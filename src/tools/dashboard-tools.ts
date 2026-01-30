@@ -1065,4 +1065,359 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       }
     },
   });
+
+  /**
+   * Update a specific dashcard without affecting other cards
+   *
+   * Updates a single dashcard's properties (parameter_mappings, visualization_settings,
+   * position, size) without requiring you to fetch and resend all other dashcards.
+   * This is much safer than update_dashboard_cards which replaces ALL cards.
+   *
+   * @param {number} dashboard_id - The ID of the dashboard
+   * @param {number} dashcard_id - The dashcard 'id' field (not card_id)
+   * @param {object} updates - Properties to update on the dashcard
+   * @returns {Promise<string>} JSON string of the updated dashboard
+   */
+  server.addTool({
+    name: "update_dashcard",
+    description:
+      "Update a specific dashcard's properties without affecting other cards - use for parameter_mappings, visualization_settings, position, or size changes. Much safer than update_dashboard_cards.",
+    metadata: { isWrite: true },
+    parameters: z.object({
+      dashboard_id: z.number().describe("The ID of the dashboard"),
+      dashcard_id: z.number().describe("The dashcard 'id' field (not card_id)"),
+      updates: z.object({
+        parameter_mappings: z.array(z.any()).optional().describe("Parameter mappings for connecting filters"),
+        visualization_settings: z.object({}).passthrough().optional().describe("Visualization settings"),
+        row: z.number().optional().describe("Row position"),
+        col: z.number().optional().describe("Column position"),
+        size_x: z.number().optional().describe("Width of the card"),
+        size_y: z.number().optional().describe("Height of the card"),
+      }).passthrough().describe("Properties to update on the dashcard"),
+    }).strict(),
+    execute: async (args: { dashboard_id: number; dashcard_id: number; updates: any }) => {
+      try {
+        const result = await metabaseClient.updateDashcard(
+          args.dashboard_id,
+          args.dashcard_id,
+          args.updates
+        );
+        return JSON.stringify(result, null, 2);
+      } catch (error) {
+        throw new Error(
+          `Failed to update dashcard ${args.dashcard_id} on dashboard ${args.dashboard_id}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    },
+  });
+
+  /**
+   * Get all queries used in a dashboard
+   *
+   * Extracts all queries from a dashboard with field/table IDs resolved to actual names.
+   * For MBQL cards, returns the MBQL structure with column names instead of field IDs.
+   * For native SQL cards, returns the raw SQL. Useful for understanding what data
+   * a dashboard uses, auditing queries, or migrating to new tables.
+   *
+   * @param {number} dashboard_id - The ID of the dashboard
+   * @returns {Promise<string>} JSON string with all queries and their metadata
+   */
+  server.addTool({
+    name: "get_dashboard_queries",
+    description:
+      "Extract all queries from a dashboard with IDs resolved to actual table/column names - use this to understand dashboard data sources, audit queries, or plan migrations",
+    metadata: { isRead: true },
+    parameters: z.object({
+      dashboard_id: z.number().describe("The ID of the dashboard"),
+    }).strict(),
+    execute: async (args: { dashboard_id: number }) => {
+      try {
+        const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
+        const dashcards = (dashboard as any).dashcards || [];
+        const tabs = (dashboard as any).tabs || [];
+        
+        // Build tab lookup
+        const tabLookup: Record<number, string> = {};
+        tabs.forEach((t: any) => { tabLookup[t.id] = t.name; });
+        
+        // Collect all unique table IDs we need to resolve
+        const tableIds = new Set<number>();
+        dashcards.forEach((dc: any) => {
+          const card = dc.card || {};
+          const query = card.dataset_query?.query;
+          if (query?.['source-table'] && typeof query['source-table'] === 'number') {
+            tableIds.add(query['source-table']);
+          }
+          // Also check joins
+          if (query?.joins) {
+            query.joins.forEach((j: any) => {
+              if (j['source-table'] && typeof j['source-table'] === 'number') {
+                tableIds.add(j['source-table']);
+              }
+            });
+          }
+        });
+        
+        // Fetch metadata for all tables to resolve field IDs
+        const tableMetadata: Record<number, any> = {};
+        const tableNames: Record<number, string> = {};
+        for (const tableId of tableIds) {
+          try {
+            const metadata = await metabaseClient.getTableQueryMetadata(tableId);
+            tableMetadata[tableId] = metadata;
+            // Build full table name: schema.table_name
+            const schema = metadata.schema || '';
+            const tableName = metadata.name || `table_${tableId}`;
+            tableNames[tableId] = schema ? `${schema}.${tableName}` : tableName;
+          } catch (e) {
+            tableNames[tableId] = `unknown_table_${tableId}`;
+          }
+        }
+        
+        // Build field ID to name lookup across all tables
+        const fieldLookup: Record<number, { name: string; table: string }> = {};
+        for (const [tableId, metadata] of Object.entries(tableMetadata)) {
+          const fields = (metadata as any).fields || [];
+          const tableName = tableNames[Number(tableId)];
+          fields.forEach((f: any) => {
+            fieldLookup[f.id] = { name: f.name, table: tableName };
+          });
+        }
+        
+        // Helper to resolve field references in MBQL
+        const resolveFieldRef = (ref: any): any => {
+          if (!Array.isArray(ref)) return ref;
+          
+          if (ref[0] === 'field' && typeof ref[1] === 'number') {
+            const fieldInfo = fieldLookup[ref[1]];
+            const fieldName = fieldInfo?.name || `field_${ref[1]}`;
+            // Keep the options (like temporal-unit) but replace ID with name
+            if (ref[2] && typeof ref[2] === 'object') {
+              return ['field', fieldName, ref[2]];
+            }
+            return ['field', fieldName];
+          }
+          
+          // Recursively resolve nested arrays
+          return ref.map((item: any) => resolveFieldRef(item));
+        };
+        
+        // Helper to resolve entire MBQL query
+        const resolveMbql = (query: any): any => {
+          if (!query) return query;
+          
+          const resolved: any = {};
+          
+          // Resolve source-table
+          if (query['source-table'] && typeof query['source-table'] === 'number') {
+            resolved['source-table'] = tableNames[query['source-table']] || `table_${query['source-table']}`;
+          }
+          
+          // Resolve aggregation
+          if (query.aggregation) {
+            resolved.aggregation = query.aggregation.map((agg: any) => resolveFieldRef(agg));
+          }
+          
+          // Resolve breakout
+          if (query.breakout) {
+            resolved.breakout = query.breakout.map((b: any) => resolveFieldRef(b));
+          }
+          
+          // Resolve filter
+          if (query.filter) {
+            resolved.filter = resolveFieldRef(query.filter);
+          }
+          
+          // Resolve order-by
+          if (query['order-by']) {
+            resolved['order-by'] = query['order-by'].map((o: any) => resolveFieldRef(o));
+          }
+          
+          // Resolve joins
+          if (query.joins) {
+            resolved.joins = query.joins.map((j: any) => ({
+              ...j,
+              'source-table': typeof j['source-table'] === 'number' 
+                ? (tableNames[j['source-table']] || `table_${j['source-table']}`)
+                : j['source-table'],
+              condition: resolveFieldRef(j.condition),
+            }));
+          }
+          
+          // Resolve fields (selected columns)
+          if (query.fields) {
+            resolved.fields = query.fields.map((f: any) => resolveFieldRef(f));
+          }
+          
+          // Copy other properties
+          if (query.limit) resolved.limit = query.limit;
+          if (query.expressions) {
+            resolved.expressions = {};
+            for (const [name, expr] of Object.entries(query.expressions)) {
+              resolved.expressions[name] = resolveFieldRef(expr);
+            }
+          }
+          
+          return resolved;
+        };
+        
+        // Process each card
+        const cards = dashcards.map((dc: any) => {
+          const card = dc.card || {};
+          const datasetQuery = card.dataset_query || {};
+          const tabName = dc.dashboard_tab_id ? tabLookup[dc.dashboard_tab_id] : null;
+          
+          // Virtual/text cards
+          if (!dc.card_id) {
+            const vizSettings = dc.visualization_settings || {};
+            return {
+              dashcard_id: dc.id,
+              card_id: null,
+              card_name: '(virtual card)',
+              tab: tabName,
+              query_type: 'virtual',
+              text: vizSettings.text || null,
+            };
+          }
+          
+          // Native SQL cards
+          if (datasetQuery.type === 'native') {
+            const native = datasetQuery.native || {};
+            return {
+              dashcard_id: dc.id,
+              card_id: dc.card_id,
+              card_name: card.name || '(unnamed)',
+              tab: tabName,
+              query_type: 'native',
+              database_id: datasetQuery.database,
+              sql: native.query || null,
+              template_tags: native['template-tags'] ? Object.keys(native['template-tags']) : [],
+            };
+          }
+          
+          // MBQL cards
+          const query = datasetQuery.query || {};
+          return {
+            dashcard_id: dc.id,
+            card_id: dc.card_id,
+            card_name: card.name || '(unnamed)',
+            tab: tabName,
+            query_type: 'mbql',
+            database_id: datasetQuery.database,
+            mbql: resolveMbql(query),
+          };
+        });
+        
+        // Build summary
+        const tablesUsed = [...new Set(Object.values(tableNames))].sort();
+        
+        return JSON.stringify({
+          dashboard_id: args.dashboard_id,
+          dashboard_name: (dashboard as any).name,
+          total_cards: dashcards.length,
+          cards: cards,
+          tables_used: tablesUsed,
+        }, null, 2);
+      } catch (error) {
+        throw new Error(
+          `Failed to get queries for dashboard ${args.dashboard_id}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    },
+  });
+
+  /**
+   * Audit dashboard filter connections
+   *
+   * Analyzes all dashboard filter connections to identify unconnected or
+   * misconfigured cards. Returns a detailed report showing which parameters
+   * are connected to which cards, and highlights any issues.
+   *
+   * @param {number} dashboard_id - The ID of the dashboard to audit
+   * @returns {Promise<string>} JSON string with audit results
+   */
+  server.addTool({
+    name: "audit_dashboard_filters",
+    description:
+      "Analyze dashboard filter connections to find unconnected or misconfigured cards - use this to diagnose filter issues and ensure all cards are properly connected",
+    metadata: { isRead: true },
+    parameters: z.object({
+      dashboard_id: z.number().describe("The ID of the dashboard to audit"),
+    }).strict(),
+    execute: async (args: { dashboard_id: number }) => {
+      try {
+        const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
+        const dashcards = (dashboard as any).dashcards || [];
+        const parameters = (dashboard as any).parameters || [];
+        
+        // Build audit report
+        const parameterIds = parameters.map((p: any) => p.id);
+        
+        const cardAudit = dashcards.map((dc: any) => {
+          const card = dc.card || {};
+          const mappings = dc.parameter_mappings || [];
+          const connectedParams = mappings.map((m: any) => m.parameter_id);
+          const missingParams = parameterIds.filter((pid: string) => !connectedParams.includes(pid));
+          
+          // Check for potential issues
+          const errors: string[] = [];
+          mappings.forEach((m: any) => {
+            if (!m.target) {
+              errors.push(`Parameter '${m.parameter_id}' has no target`);
+            } else if (Array.isArray(m.target) && m.target[0] === 'dimension') {
+              // MBQL card - check for stage-number
+              const hasStageNumber = m.target.some((t: any) => 
+                typeof t === 'object' && t !== null && 'stage-number' in t
+              );
+              if (!hasStageNumber) {
+                errors.push(`Parameter '${m.parameter_id}' missing stage-number (MBQL cards require this)`);
+              }
+            }
+          });
+          
+          // Determine source table
+          let sourceTable = null;
+          if (card.dataset_query?.query?.['source-table']) {
+            sourceTable = card.dataset_query.query['source-table'];
+          }
+          
+          return {
+            dashcard_id: dc.id,
+            card_id: dc.card_id,
+            card_name: card.name || '(virtual card)',
+            source_table: sourceTable,
+            is_native_query: card.dataset_query?.type === 'native',
+            connected_params: connectedParams,
+            missing_params: missingParams,
+            errors: errors,
+          };
+        });
+        
+        // Filter to only cards that have issues or are missing connections
+        const cardsWithIssues = cardAudit.filter((c: any) => 
+          c.missing_params.length > 0 || c.errors.length > 0
+        );
+        
+        return JSON.stringify({
+          dashboard_id: args.dashboard_id,
+          total_parameters: parameters.length,
+          parameter_ids: parameterIds,
+          total_cards: dashcards.length,
+          cards_with_issues: cardsWithIssues.length,
+          all_cards: cardAudit,
+          cards_needing_attention: cardsWithIssues,
+        }, null, 2);
+      } catch (error) {
+        throw new Error(
+          `Failed to audit dashboard ${args.dashboard_id}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+    },
+  });
 }
