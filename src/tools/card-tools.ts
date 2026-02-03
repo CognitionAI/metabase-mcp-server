@@ -85,7 +85,7 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       name: z.string().describe("Card name"),
       description: z.string().optional().describe("Description"),
-      dataset_query: z.any().optional().describe("Dataset query object - fully preserved including nested MBQL arrays"),
+      dataset_query: z.unknown().optional().describe("Dataset query object - fully preserved including nested MBQL arrays"),
       display: z.string().optional().describe("Visualization type"),
       visualization_settings: z
         .object({})

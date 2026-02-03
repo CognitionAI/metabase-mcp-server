@@ -20,6 +20,20 @@ export interface Dashboard {
   dashcards?: DashboardCard[]; // Metabase API actually returns 'dashcards', not 'cards'
 }
 
+export interface ParameterMapping {
+  parameter_id: string;
+  card_id: number;
+  target: ParameterMappingTarget;
+}
+
+// Target can be:
+// - ["dimension", ["field", field_id, {"base-type": string, "stage-number"?: number}]] for MBQL
+// - ["variable", ["template-tag", tag_name]] for native queries
+export type ParameterMappingTarget = 
+  | ["dimension", ["field", number, Record<string, unknown>]]
+  | ["variable", ["template-tag", string]]
+  | unknown[]; // fallback for other formats
+
 export interface DashboardCard {
   id: number;
   card_id: number;
@@ -28,8 +42,8 @@ export interface DashboardCard {
   col: number;
   sizeX: number;
   sizeY: number;
-  parameter_mappings?: any[];
-  visualization_settings?: any;
+  parameter_mappings?: ParameterMapping[];
+  visualization_settings?: Record<string, unknown>;
 }
 
 export interface Card {
