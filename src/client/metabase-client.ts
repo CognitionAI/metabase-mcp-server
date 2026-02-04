@@ -31,6 +31,11 @@ export class MetabaseClient {
       timeout: 30000, // 30 second timeout to prevent hanging requests
     });
 
+    if (config.proxyAuthorization) {
+      this.logInfo("Using Proxy-Authorization header for proxy authentication.");
+      this.axiosInstance.defaults.headers.common["Proxy-Authorization"] = config.proxyAuthorization;
+    }
+
     if (config.apiKey) {
       this.logInfo("Using Metabase API Key for authentication.");
       this.axiosInstance.defaults.headers.common["X-API-Key"] = config.apiKey;

@@ -12,6 +12,7 @@ export function loadConfig(): MetabaseConfig {
   const username = process.env.METABASE_USERNAME;
   const password = process.env.METABASE_PASSWORD;
   const apiKey = process.env.METABASE_API_KEY;
+  const proxyAuthorization = process.env.METABASE_PROXY_AUTHORIZATION;
 
   if (!url) {
     throw new Error("METABASE_URL environment variable is required");
@@ -28,6 +29,7 @@ export function loadConfig(): MetabaseConfig {
     username,
     password,
     apiKey,
+    proxyAuthorization,
   };
 }
 
