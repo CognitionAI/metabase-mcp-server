@@ -416,7 +416,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .array(z.object({
           parameter_id: z.string().describe("The parameter ID to map"),
           card_id: z.number().describe("The card ID this mapping applies to"),
-          target: z.array(z.unknown()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
+          target: z.array(z.any()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
         }).passthrough())
         .optional()
         .describe("Parameter mappings for the card - connects dashboard filters to card fields"),
@@ -1094,7 +1094,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         parameter_mappings: z.array(z.object({
           parameter_id: z.string().describe("The parameter ID to map"),
           card_id: z.number().describe("The card ID this mapping applies to"),
-          target: z.array(z.unknown()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
+          target: z.array(z.any()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
         }).passthrough()).optional().describe("Parameter mappings for connecting filters"),
         visualization_settings: z.object({}).passthrough().optional().describe("Visualization settings"),
         row: z.number().optional().describe("Row position"),
