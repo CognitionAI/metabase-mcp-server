@@ -261,15 +261,20 @@ export class MetabaseClient {
     return response.data;
   }
 
-  async updateDashboardCards(dashboardId: number, cards: any[]): Promise<any> {
+  async updateDashboardCards(dashboardId: number, cards: any[], tabs?: any[]): Promise<any> {
     // Get current dashboard to preserve existing properties
     const dashboard = await this.getDashboard(dashboardId);
-    
+
     // Replace all dashcards with the provided cards while preserving other properties
-    const response = await this.axiosInstance.put(`/api/dashboard/${dashboardId}`, {
+    // If tabs are provided, override those too (use [] to remove all tabs)
+    const payload: any = {
       ...dashboard,
       dashcards: cards
-    });
+    };
+    if (tabs !== undefined) {
+      payload.tabs = tabs;
+    }
+    const response = await this.axiosInstance.put(`/api/dashboard/${dashboardId}`, payload);
     return response.data;
   }
 
