@@ -217,8 +217,9 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
       description: z.string().optional().describe("New description for the collection"),
       parent_id: z.number().optional().describe("New parent collection ID"),
       color: z.string().optional().describe("New color for the collection"),
+      archived: z.boolean().optional().describe("Archive (true) or unarchive (false) the collection"),
     }).strict(),
-    execute: async (args: { collection_id: number; name?: string; description?: string; parent_id?: number; color?: string }) => {
+    execute: async (args: { collection_id: number; name?: string; description?: string; parent_id?: number; color?: string; archived?: boolean }) => {
       try {
         const { collection_id, ...updates } = args;
         const collection = await metabaseClient.updateCollection(collection_id, updates);
@@ -248,6 +249,8 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     }).strict(),
     execute: async (args: { collection_id: number }) => {
       try {
+        // Metabase requires collections to be archived (trashed) before deletion
+        await metabaseClient.updateCollection(args.collection_id, { archived: true });
         await metabaseClient.deleteCollection(args.collection_id);
         return JSON.stringify({
           collection_id: args.collection_id,
