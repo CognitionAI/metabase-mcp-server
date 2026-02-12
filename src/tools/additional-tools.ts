@@ -66,10 +66,16 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
       collection_id: number | null;
     }) => {
       try {
+        // For cards, also clear dashboard_id so Dashboard Questions (cards
+        // created directly on a dashboard) can be moved to a collection.
+        const payload: Record<string, any> = { collection_id: args.collection_id };
+        if (args.item_type === "card") {
+          payload.dashboard_id = null;
+        }
         const result = await metabaseClient.apiCall(
           "PUT",
           `/api/${args.item_type}/${args.item_id}`,
-          { collection_id: args.collection_id }
+          payload
         );
         return JSON.stringify(result, null, 2);
       } catch (error) {
@@ -211,8 +217,9 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
       description: z.string().optional().describe("New description for the collection"),
       parent_id: z.number().optional().describe("New parent collection ID"),
       color: z.string().optional().describe("New color for the collection"),
+      archived: z.boolean().optional().describe("Archive (true) or unarchive (false) the collection"),
     }).strict(),
-    execute: async (args: { collection_id: number; name?: string; description?: string; parent_id?: number; color?: string }) => {
+    execute: async (args: { collection_id: number; name?: string; description?: string; parent_id?: number; color?: string; archived?: boolean }) => {
       try {
         const { collection_id, ...updates } = args;
         const collection = await metabaseClient.updateCollection(collection_id, updates);
@@ -242,6 +249,8 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
     }).strict(),
     execute: async (args: { collection_id: number }) => {
       try {
+        // Metabase requires collections to be archived (trashed) before deletion
+        await metabaseClient.updateCollection(args.collection_id, { archived: true });
         await metabaseClient.deleteCollection(args.collection_id);
         return JSON.stringify({
           collection_id: args.collection_id,
