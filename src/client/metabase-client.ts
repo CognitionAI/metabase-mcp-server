@@ -416,28 +416,59 @@ export class MetabaseClient {
 
   async moveCards(cardIds: number[], collectionId?: number, dashboardId?: number): Promise<any> {
     const data: any = { card_ids: cardIds };
-    
-    if (collectionId) {
+
+    if (collectionId !== undefined) {
       data.collection_id = collectionId;
     }
-    if (dashboardId) {
+    if (dashboardId !== undefined) {
       data.dashboard_id = dashboardId;
     }
-    
-    const response = await this.axiosInstance.post("/api/cards/move", data);
-    return response.data;
+
+    try {
+      const response = await this.axiosInstance.post("/api/cards/move", data);
+      return response.data;
+    } catch (error: any) {
+      // Dashboard Questions (cards created directly on a dashboard) cannot be
+      // moved via the bulk endpoint. Fall back to individual PUT calls that
+      // detach dashboard_id so the collection_id can be set.
+      const msg = error?.response?.data?.message ?? error?.message ?? "";
+      if (msg.includes("Dashboard Question") && collectionId !== undefined) {
+        const results = [];
+        for (const cardId of cardIds) {
+          const update: any = { collection_id: collectionId, dashboard_id: null };
+          const res = await this.axiosInstance.put(`/api/card/${cardId}`, update);
+          results.push(res.data);
+        }
+        return results;
+      }
+      throw error;
+    }
   }
 
   // Card collection operations
   async moveCardsToCollection(cardIds: number[], collectionId?: number): Promise<any> {
     const requestBody: any = { card_ids: cardIds };
-    
+
     if (collectionId !== undefined) {
       requestBody.collection_id = collectionId;
     }
-    
-    const response = await this.axiosInstance.post("/api/card/collections", requestBody);
-    return response.data;
+
+    try {
+      const response = await this.axiosInstance.post("/api/card/collections", requestBody);
+      return response.data;
+    } catch (error: any) {
+      const msg = error?.response?.data?.message ?? error?.message ?? "";
+      if (msg.includes("Dashboard Question") && collectionId !== undefined) {
+        const results = [];
+        for (const cardId of cardIds) {
+          const update: any = { collection_id: collectionId, dashboard_id: null };
+          const res = await this.axiosInstance.put(`/api/card/${cardId}`, update);
+          results.push(res.data);
+        }
+        return results;
+      }
+      throw error;
+    }
   }
 
   // Card embeddable operations

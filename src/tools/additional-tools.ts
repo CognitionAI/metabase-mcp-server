@@ -66,10 +66,16 @@ export function addAdditionalTools(server: any, metabaseClient: MetabaseClient) 
       collection_id: number | null;
     }) => {
       try {
+        // For cards, also clear dashboard_id so Dashboard Questions (cards
+        // created directly on a dashboard) can be moved to a collection.
+        const payload: Record<string, any> = { collection_id: args.collection_id };
+        if (args.item_type === "card") {
+          payload.dashboard_id = null;
+        }
         const result = await metabaseClient.apiCall(
           "PUT",
           `/api/${args.item_type}/${args.item_id}`,
-          { collection_id: args.collection_id }
+          payload
         );
         return JSON.stringify(result, null, 2);
       } catch (error) {
