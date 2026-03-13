@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { MetabaseClient } from "../client/metabase-client.js";
 
-export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
+export function addDashboardTools(server: any, getClient: (ctx?: any) => MetabaseClient) {
   /**
    * List all available dashboards
    *
@@ -16,7 +16,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     description:
       "Retrieve all Metabase dashboards - use this to discover available dashboards, get an overview of analytical content, or find specific dashboards",
     metadata: { isEssential: true, isRead: true },
-    execute: async () => {
+    execute: async (_args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboards = await metabaseClient.getDashboards();
         return JSON.stringify(dashboards, null, 2);
@@ -48,7 +49,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard to retrieve"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
         return JSON.stringify(dashboard, null, 2);
@@ -80,7 +82,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
         const cards = dashboard.dashcards || [];
@@ -113,7 +116,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getDashboardRelatedEntities(
           args.dashboard_id
@@ -147,7 +151,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getDashboardRevisions(
           args.dashboard_id
@@ -177,7 +182,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isRead: true },
     description:
       "Retrieve all Metabase dashboards configured for embedding (requires superuser) - use this to audit embedded content or manage external integrations",
-    execute: async () => {
+    execute: async (_args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboards = await metabaseClient.getEmbeddableDashboards();
         return JSON.stringify(dashboards, null, 2);
@@ -205,7 +211,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     metadata: { isRead: true },
     description:
       "Retrieve all Metabase dashboards with public URLs enabled (requires superuser) - use this to audit publicly accessible content or review security settings",
-    execute: async () => {
+    execute: async (_args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboards = await metabaseClient.getPublicDashboards();
         return JSON.stringify(dashboards, null, 2);
@@ -261,7 +268,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       parameters?: any[];
       collection_id?: number;
       collection_position?: number;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboard = await metabaseClient.createDashboard(args);
         return JSON.stringify(dashboard, null, 2);
@@ -293,7 +301,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.createDashboardPublicLink(
           args.dashboard_id
@@ -351,7 +360,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       description?: string;
       collection_id?: number;
       collection_position?: number;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const { from_dashboard_id, ...copyData } = args;
         const dashboard = await metabaseClient.copyDashboard(
@@ -436,7 +446,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       visualization_settings?: any;
       parameter_mappings?: any[];
       series?: any[];
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const { dashboard_id, ...cardData } = args;
         const result = await metabaseClient.addCardToDashboard(
@@ -501,7 +512,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       col?: number;
       size_x?: number;
       size_y?: number;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const displayType = args.display_type || "text";
         const sizeY = args.size_y || (displayType === "heading" ? 1 : 2);
@@ -556,7 +568,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.favoriteDashboard(
           args.dashboard_id
@@ -592,7 +605,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       dashboard_id: z.number().describe("The ID of the dashboard"),
       revision_id: z.number().describe("The revision ID to revert to"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; revision_id: number }) => {
+    execute: async (args: { dashboard_id: number; revision_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.revertDashboard(
           args.dashboard_id,
@@ -630,7 +644,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .passthrough()
         .describe("Dashboard object to save"),
     }).strict(),
-    execute: async (args: { dashboard: any }) => {
+    execute: async (args: { dashboard: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.saveDashboard(args.dashboard);
         return JSON.stringify(result, null, 2);
@@ -667,7 +682,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .passthrough()
         .describe("Dashboard object to save"),
     }).strict(),
-    execute: async (args: { parent_collection_id: number; dashboard: any }) => {
+    execute: async (args: { parent_collection_id: number; dashboard: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.saveDashboardToCollection(
           args.parent_collection_id,
@@ -745,7 +761,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .describe("Embedding parameters"),
       position: z.number().optional().describe("Dashboard position"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; [key: string]: any }) => {
+    execute: async (args: { dashboard_id: number; [key: string]: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const { dashboard_id, ...updates } = args;
         const dashboard = await metabaseClient.updateDashboard(
@@ -805,7 +822,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         )
         .describe("Array of card configurations"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; cards: any[] }) => {
+    execute: async (args: { dashboard_id: number; cards: any[] }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.updateDashboardCards(
           args.dashboard_id,
@@ -846,7 +864,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .default(false)
         .describe("Whether to permanently delete (true) or archive (false)"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; hard_delete?: boolean }) => {
+    execute: async (args: { dashboard_id: number; hard_delete?: boolean }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         await metabaseClient.deleteDashboard(
           args.dashboard_id,
@@ -889,7 +908,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         await metabaseClient.deleteDashboardPublicLink(args.dashboard_id);
         return JSON.stringify(
@@ -931,7 +951,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
       dashboard_id: z.number().describe("The ID of the dashboard"),
       dashcard_ids: z.array(z.number()).describe("Array of dashcard IDs to remove (the 'id' field from dashcards, not 'card_id')"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; dashcard_ids: number[] }) => {
+    execute: async (args: { dashboard_id: number; dashcard_ids: number[] }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.removeCardsFromDashboard(
           args.dashboard_id,
@@ -965,7 +986,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.unfavoriteDashboard(
           args.dashboard_id
@@ -1003,7 +1025,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .describe("The ID of the dashboard containing the card"),
       card_id: z.number().describe("The ID of the card to execute"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; card_id: number }) => {
+    execute: async (args: { dashboard_id: number; card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.executeCard(args.card_id);
         return JSON.stringify(
@@ -1049,7 +1072,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .optional()
         .describe("Maximum number of results to return"),
     }).strict(),
-    execute: async (args: { query: string; limit?: number }) => {
+    execute: async (args: { query: string; limit?: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboards = await metabaseClient.getDashboards();
         const filtered = dashboards.filter(
@@ -1103,7 +1127,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         size_y: z.number().optional().describe("Height of the card"),
       }).passthrough().describe("Properties to update on the dashcard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number; dashcard_id: number; updates: any }) => {
+    execute: async (args: { dashboard_id: number; dashcard_id: number; updates: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.updateDashcard(
           args.dashboard_id,
@@ -1140,7 +1165,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
         const dashcards = (dashboard as any).dashcards || [];
@@ -1356,7 +1382,8 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       dashboard_id: z.number().describe("The ID of the dashboard to audit"),
     }).strict(),
-    execute: async (args: { dashboard_id: number }) => {
+    execute: async (args: { dashboard_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const dashboard = await metabaseClient.getDashboard(args.dashboard_id);
         const dashcards = (dashboard as any).dashcards || [];

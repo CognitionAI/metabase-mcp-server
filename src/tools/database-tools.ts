@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { MetabaseClient } from "../client/metabase-client.js";
 
-export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
+export function addDatabaseTools(server: any, getClient: (ctx?: any) => MetabaseClient) {
 
   /**
    * List all available databases
@@ -16,7 +16,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
     name: "list_databases",
     description: "Retrieve all database connections in Metabase - use this to discover available data sources, check connection status, or get an overview of connected databases",
     metadata: { isEssential: true, isRead: true },
-    execute: async () => {
+    execute: async (_args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const databases = await metabaseClient.getDatabases();
         return JSON.stringify(databases, null, 2);
@@ -43,7 +44,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       database_id: z.number().describe("The ID of the database to retrieve"),
     }).strict(),
-    execute: async (args: { database_id: number }) => {
+    execute: async (args: { database_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const database = await metabaseClient.getDatabase(args.database_id);
         return JSON.stringify(database, null, 2);
@@ -84,7 +86,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
       is_on_demand: z.boolean().optional().describe("Whether database is on-demand"),
       schedules: z.object({}).passthrough().optional().describe("Sync schedules"),
     }).strict(),
-    execute: async (args: { engine: string; name: string; details: any; is_full_sync?: boolean; is_on_demand?: boolean; schedules?: any }) => {
+    execute: async (args: { engine: string; name: string; details: any; is_full_sync?: boolean; is_on_demand?: boolean; schedules?: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const database = await metabaseClient.createDatabase(args);
         return JSON.stringify(database, null, 2);
@@ -123,7 +126,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
       is_on_demand: z.boolean().optional().describe("Whether database is on-demand"),
       schedules: z.object({}).passthrough().optional().describe("Updated sync schedules"),
     }).strict(),
-    execute: async (args: { database_id: number; [key: string]: any }) => {
+    execute: async (args: { database_id: number; [key: string]: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const { database_id, ...updates } = args;
         const database = await metabaseClient.updateDatabase(database_id, updates);
@@ -151,7 +155,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       database_id: z.number().describe("The ID of the database to delete"),
     }).strict(),
-    execute: async (args: { database_id: number }) => {
+    execute: async (args: { database_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         await metabaseClient.deleteDatabase(args.database_id);
         return JSON.stringify({
@@ -195,7 +200,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
         password: z.string().describe("Database password"),
       }).passthrough().describe("Database connection details to validate"),
     }).strict(),
-    execute: async (args: { engine: string; details: any }) => {
+    execute: async (args: { engine: string; details: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.validateDatabase(args.engine, args.details);
         return JSON.stringify(result, null, 2);
@@ -217,7 +223,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
   server.addTool({
     name: "add_sample_database",
     description: "Add the built-in Metabase sample database with demo data - use this for testing, learning, or exploring Metabase features",
-    execute: async () => {
+    execute: async (_args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const database = await metabaseClient.addSampleDatabase();
         return JSON.stringify(database, null, 2);
@@ -243,7 +250,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       database_id: z.number().describe("The ID of the database to check"),
     }).strict(),
-    execute: async (args: { database_id: number }) => {
+    execute: async (args: { database_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.checkDatabaseHealth(args.database_id);
         return JSON.stringify(result, null, 2);
@@ -269,7 +277,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       database_id: z.number().describe("The ID of the database"),
     }).strict(),
-    execute: async (args: { database_id: number }) => {
+    execute: async (args: { database_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const metadata = await metabaseClient.getDatabaseMetadata(args.database_id);
         return JSON.stringify(metadata, null, 2);
@@ -295,7 +304,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       database_id: z.number().describe("The ID of the database"),
     }).strict(),
-    execute: async (args: { database_id: number }) => {
+    execute: async (args: { database_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const schemas = await metabaseClient.getDatabaseSchemas(args.database_id);
         return JSON.stringify(schemas, null, 2);
@@ -323,7 +333,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
       database_id: z.number().describe("The ID of the database"),
       schema_name: z.string().describe("The name of the schema"),
     }).strict(),
-    execute: async (args: { database_id: number; schema_name: string }) => {
+    execute: async (args: { database_id: number; schema_name: string }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const schema = await metabaseClient.getDatabaseSchema(args.database_id, args.schema_name);
         return JSON.stringify(schema, null, 2);
@@ -358,7 +369,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
         value: z.unknown().describe("Parameter value"),
       }).passthrough()).optional().describe("Optional query parameters for parameterized queries"),
     }).strict(),
-    execute: async (args: { database_id: number; query: string; parameters?: any[] }) => {
+    execute: async (args: { database_id: number; query: string; parameters?: any[] }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.executeQuery(args.database_id, args.query, args.parameters || []);
         return JSON.stringify(result, null, 2);
@@ -385,7 +397,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       database_id: z.number().describe("The ID of the database to sync"),
     }).strict(),
-    execute: async (args: { database_id: number }) => {
+    execute: async (args: { database_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.syncDatabaseSchema(args.database_id);
         return JSON.stringify({
