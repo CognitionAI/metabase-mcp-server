@@ -44,7 +44,9 @@
     "clean": "rm -rf build dist",
     "docker:build": "docker build -t metabase-mcp-server .",
     "docker:run": "docker run -it --rm metabase-mcp-server",
-    "docker:compose": "docker-compose up"
+    "docker:compose": "docker-compose up",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.6.1",
@@ -55,8 +57,14 @@
     "fastmcp": "^3.14.5"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.17.22",
-    "typescript": "^5.3.3"
+    "@types/supertest": "^7.2.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "supertest": "^7.2.2",
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=20.19.0",
