@@ -18,7 +18,7 @@ app.get('/health', (req, res) => {
 app.get('/.well-known/oauth-authorization-server', (req, res) => {
  res.setHeader('Content-Type', 'application/json');
  res.json({
-   issuer: 'https://data-dev.clay.cl/metabase-mcp'
+   issuer: process.env.SSE_SERVER_URL || 'http://localhost:8010'
  });
 });
 
