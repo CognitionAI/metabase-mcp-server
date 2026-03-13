@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { MetabaseClient } from "../client/metabase-client.js";
 
-export function addCardTools(server: any, metabaseClient: MetabaseClient) {
+export function addCardTools(server: any, getClient: (ctx?: any) => MetabaseClient) {
 
   /**
    * List all available Metabase cards
@@ -22,7 +22,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       f: z.string().optional().describe("Filter by source (e.g., 'models')"),
       model_id: z.number().optional().describe("Filter by model_id"),
     }).strict(),
-    execute: async (args: { f?: string; model_id?: number } = {}) => {
+    execute: async (args: { f?: string; model_id?: number } = {}, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const cards = await metabaseClient.getCards(args);
         return JSON.stringify(cards, null, 2);
@@ -51,7 +52,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const card = await metabaseClient.getCard(args.card_id);
         return JSON.stringify(card, null, 2);
@@ -95,7 +97,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       collection_id: z.number().optional().describe("Collection to save in"),
       database_id: z.number().optional().describe("Database ID"),
     }).strict(),
-    execute: async (args: any) => {
+    execute: async (args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const card = await metabaseClient.createCard(args);
         return JSON.stringify(card, null, 2);
@@ -136,7 +139,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: number;
       updates: any;
       query_params?: any;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const card = await metabaseClient.updateCard(
           args.card_id,
@@ -174,7 +178,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
         .default(false)
         .describe("Hard delete if true, else archive"),
     }).strict(),
-    execute: async (args: { card_id: number; hard_delete?: boolean }) => {
+    execute: async (args: { card_id: number; hard_delete?: boolean }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         await metabaseClient.deleteCard(args.card_id, args.hard_delete || false);
         return JSON.stringify(
@@ -229,7 +234,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       ignore_cache?: boolean;
       collection_preview?: boolean;
       dashboard_id?: number;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.executeCard(args.card_id, {
           ignore_cache: args.ignore_cache,
@@ -270,7 +276,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: number;
       export_format: string;
       parameters?: any;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.executeCardQueryWithFormat(
           args.card_id,
@@ -305,7 +312,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.copyCard(args.card_id);
         return JSON.stringify(result, null, 2);
@@ -336,7 +344,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getCardDashboards(args.card_id);
         return JSON.stringify(result, null, 2);
@@ -363,7 +372,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     name: "list_embeddable_cards",
     description: "Retrieve all Metabase cards configured for embedding in external applications (requires admin privileges) - use this to audit embedded content, manage external integrations, or review public-facing analytics",
     metadata: { isRead: true },
-    execute: async () => {
+    execute: async (_args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getEmbeddableCards();
         return JSON.stringify(result, null, 2);
@@ -393,7 +403,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.createCardPublicLink(args.card_id);
         return JSON.stringify(result, null, 2);
@@ -423,7 +434,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.deleteCardPublicLink(args.card_id);
         return JSON.stringify(result, null, 2);
@@ -450,7 +462,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     name: "list_public_cards",
     description: "Retrieve all Metabase cards that have public URLs enabled (requires admin privileges) - use this to audit publicly accessible content, review security settings, or manage external data sharing",
     metadata: { isRead: true },
-    execute: async () => {
+    execute: async (_args: any, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getPublicCards();
         return JSON.stringify(result, null, 2);
@@ -489,7 +502,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_ids: number[];
       collection_id?: number;
       dashboard_id?: number;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.moveCards(
           args.card_ids,
@@ -526,7 +540,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_ids: z.array(z.number()).describe("Card IDs to move"),
       collection_id: z.number().optional().describe("Target collection ID"),
     }).strict(),
-    execute: async (args: { card_ids: number[]; collection_id?: number }) => {
+    execute: async (args: { card_ids: number[]; collection_id?: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.moveCardsToCollection(
           args.card_ids,
@@ -561,7 +576,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: z.number().describe("Card ID"),
       parameters: z.object({}).passthrough().optional().describe("Execution parameters"),
     }).strict(),
-    execute: async (args: { card_id: number; parameters?: any }) => {
+    execute: async (args: { card_id: number; parameters?: any }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.executePivotCardQuery(
           args.card_id,
@@ -597,7 +613,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: z.number().describe("Card ID"),
       param_key: z.string().describe("Parameter key"),
     }).strict(),
-    execute: async (args: { card_id: number; param_key: string }) => {
+    execute: async (args: { card_id: number; param_key: string }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getCardParamValues(
           args.card_id,
@@ -639,7 +656,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: number;
       param_key: string;
       query: string;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.searchCardParamValues(
           args.card_id,
@@ -681,7 +699,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       card_id: number;
       param_key: string;
       value: string;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getCardParamRemapping(
           args.card_id,
@@ -715,7 +734,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getCardQueryMetadata(args.card_id);
         return JSON.stringify(result, null, 2);
@@ -762,7 +782,8 @@ export function addCardTools(server: any, metabaseClient: MetabaseClient) {
       last_cursor?: string | number;
       query?: string;
       exclude_ids?: number[];
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getCardSeries(args.card_id, {
           last_cursor: args.last_cursor,

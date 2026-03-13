@@ -97,6 +97,66 @@ node dist/server.js --write           # Write tools only
 node dist/server.js --read            # Read-only tools only
 ```
 
+## 🌐 HTTP Stream Transport (Shared Deployment)
+
+The server supports an **HTTP Stream transport** mode that lets a single deployed instance serve multiple users — each request provides its own Metabase credentials via headers. This is the recommended approach for cloud/SaaS deployments and is required by modern MCP clients like **Claude Code CLI**.
+
+### Why HTTP Stream?
+
+| | stdio (classic) | HTTP Stream (new) |
+|---|---|---|
+| Deployment | One process per user | One shared process |
+| Credentials | Env vars at startup | Per-request headers |
+| Claude Code CLI | ❌ Not supported | ✅ Supported |
+| Cursor, Windsurf | ✅ Supported | ✅ Supported |
+
+### Starting in HTTP Stream mode
+
+```bash
+MCP_TRANSPORT=http node dist/server.js
+# or with custom port:
+MCP_TRANSPORT=http PORT=8011 node dist/server.js --all
+```
+
+### Connecting from Claude Code CLI
+
+```bash
+claude mcp add --transport http metabase "https://your-deployment.example.com/mcp" \
+  --header "x-metabase-url: https://your-metabase-instance.com" \
+  --header "x-metabase-api-key: your_api_key"
+```
+
+Or add it globally (available in all projects):
+
+```bash
+claude mcp add --transport http --scope user metabase "https://your-deployment.example.com/mcp" \
+  --header "x-metabase-url: https://your-metabase-instance.com" \
+  --header "x-metabase-api-key: your_api_key"
+```
+
+### Request Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-metabase-url` | Yes* | Metabase instance URL. Can be omitted if `METABASE_URL` env var is set on the server. |
+| `x-metabase-api-key` | Yes** | Metabase API key |
+| `x-metabase-username` | Yes** | Metabase username (alternative to API key) |
+| `x-metabase-password` | Yes** | Metabase password (required if username is provided) |
+
+\* Falls back to `METABASE_URL` env var if not in header.
+\*\* Either `x-metabase-api-key` OR `x-metabase-username` + `x-metabase-password` is required.
+
+### Username/Password via headers
+
+```bash
+claude mcp add --transport http metabase "https://your-deployment.example.com/mcp" \
+  --header "x-metabase-url: https://your-metabase-instance.com" \
+  --header "x-metabase-username: admin@example.com" \
+  --header "x-metabase-password: secret"
+```
+
+---
+
 ## 🔌 Integration Examples
 
 ### Claude Desktop
@@ -379,6 +439,13 @@ npm install
 ### Build
 ```bash
 npm run build
+```
+
+### Tests
+```bash
+npm test
+# watch mode:
+npm run test:watch
 ```
 
 ### Development Mode

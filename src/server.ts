@@ -9,54 +9,63 @@ import { addCardTools } from "./tools/card-tools.js";
 import { addTableTools } from "./tools/table-tools.js";
 import { addAdditionalTools } from "./tools/additional-tools.js";
 import { parseToolFilterOptions } from "./utils/tool-filters.js";
+import { createAuthenticateHandler, createClientResolver } from "./auth.js";
 
 // Parse command line arguments for tool filtering
 const filterOptions = parseToolFilterOptions();
 
-// Load and validate configuration
-const config = loadConfig();
-validateConfig(config);
+const isHttpMode = process.env.MCP_TRANSPORT === 'http';
 
-// Initialize Metabase client
-const metabaseClient = new MetabaseClient(config);
+// In stdio mode, create a single shared client from env vars at startup.
+// In httpStream mode, each client provides credentials via request headers.
+let defaultClient: MetabaseClient | null = null;
+if (!isHttpMode) {
+  const config = loadConfig();
+  validateConfig(config);
+  defaultClient = new MetabaseClient(config);
+}
 
-// Create FastMCP server
-const server = new FastMCP({
+const getClient = createClientResolver(defaultClient);
+
+// Build FastMCP server options
+const serverOptions: any = {
   name: "metabase-server",
   version: "2.0.1",
-});
+};
 
-// Override addTool to apply filtering
+if (isHttpMode) {
+  serverOptions.authenticate = createAuthenticateHandler();
+}
+
+// Create FastMCP server
+const server = new FastMCP(serverOptions);
+
+// Override addTool to apply tool filtering (unchanged behavior)
 const originalAddTool = server.addTool.bind(server);
 server.addTool = function(toolConfig: any) {
   const { metadata = {}, ...restConfig } = toolConfig;
   const { isWrite, isEssential, isRead } = metadata;
 
-  // Apply filtering based on selected mode
   switch (filterOptions.mode) {
     case 'essential':
-      // Only load essential tools
       if (!isEssential) return;
       break;
     case 'write':
-      // Load read and write tools
       if (!isRead && !isWrite) return;
       break;
     case 'all':
-      // Load all tools - no filtering
       break;
   }
 
-  // Register the tool
   originalAddTool(restConfig);
 };
 
-// Adding all tools to the server
-addDashboardTools(server, metabaseClient);
-addDatabaseTools(server, metabaseClient);
-addCardTools(server, metabaseClient);
-addTableTools(server, metabaseClient);
-addAdditionalTools(server, metabaseClient);
+// Adding all tools — each execute calls getClient(context) internally
+addDashboardTools(server, getClient);
+addDatabaseTools(server, getClient);
+addCardTools(server, getClient);
+addTableTools(server, getClient);
+addAdditionalTools(server, getClient);
 
 // Log filtering status
 console.error(`INFO: Tool filtering mode: ${filterOptions.mode} ${filterOptions.mode === 'essential' ? '(default)' : ''}`);
@@ -74,6 +83,17 @@ switch (filterOptions.mode) {
 }
 
 // Start the server
-server.start({
-  transportType: "stdio",
-});
+if (isHttpMode) {
+  console.error(`INFO: Starting HTTP Stream transport on port ${process.env.PORT || '8011'}`);
+  server.start({
+    transportType: "httpStream",
+    httpStream: {
+      port: parseInt(process.env.PORT || '8011'),
+      endpoint: "/mcp",
+    },
+  });
+} else {
+  server.start({
+    transportType: "stdio",
+  });
+}

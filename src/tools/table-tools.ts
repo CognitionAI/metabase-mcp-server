@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { MetabaseClient } from "../client/metabase-client.js";
 
-export function addTableTools(server: any, metabaseClient: MetabaseClient) {
+export function addTableTools(server: any, getClient: (ctx?: any) => MetabaseClient) {
 
   // Metabase API reference (OpenAPI):
   // - Hosted: https://www.metabase.com/docs/latest/api.json
@@ -27,7 +27,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
         .optional()
         .describe("Optional list of table IDs to filter by"),
     }).strict(),
-    execute: async (args: { ids?: number[] } = {}) => {
+    execute: async (args: { ids?: number[] } = {}, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getTables(args.ids);
         return JSON.stringify(result, null, 2);
@@ -85,7 +86,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       owner_user_id?: number;
       show_in_getting_started?: boolean;
       entity_type?: string;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const { ids, ...updates } = args;
         const result = await metabaseClient.updateTables(ids, updates);
@@ -137,7 +139,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       include_sensitive_fields?: boolean;
       include_hidden_fields?: boolean;
       include_editable_data_model?: boolean;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getTable(args.table_id, {
           include_sensitive_fields: args.include_sensitive_fields,
@@ -201,7 +204,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       owner_user_id?: number;
       show_in_getting_started?: boolean;
       entity_type?: string;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const { table_id, ...updates } = args;
         const result = await metabaseClient.updateTable(table_id, updates);
@@ -232,7 +236,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
     }).strict(),
-    execute: async (args: { table_id: number }) => {
+    execute: async (args: { table_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getTableFks(args.table_id);
         return JSON.stringify(result, null, 2);
@@ -273,7 +278,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       include_sensitive_fields?: boolean;
       include_hidden_fields?: boolean;
       include_editable_data_model?: boolean;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getTableQueryMetadata(
           args.table_id,
@@ -310,7 +316,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
     }).strict(),
-    execute: async (args: { table_id: number }) => {
+    execute: async (args: { table_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getTableRelated(args.table_id);
         return JSON.stringify(result, null, 2);
@@ -340,7 +347,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID for the virtual table"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getCardTableFks(args.card_id);
         return JSON.stringify(result, null, 2);
@@ -370,7 +378,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       card_id: z.number().describe("Card ID for the virtual table"),
     }).strict(),
-    execute: async (args: { card_id: number }) => {
+    execute: async (args: { card_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getCardTableQueryMetadata(
           args.card_id
@@ -410,7 +419,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       table_id: number;
       filename: string;
       file_content: string;
-    }) => {
+    }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.appendCsvToTable(
           args.table_id,
@@ -444,7 +454,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
     }).strict(),
-    execute: async (args: { table_id: number }) => {
+    execute: async (args: { table_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.discardTableFieldValues(
           args.table_id
@@ -481,7 +492,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
         .array(z.number())
         .describe("Array of field IDs in desired order"),
     }).strict(),
-    execute: async (args: { table_id: number; field_order: number[] }) => {
+    execute: async (args: { table_id: number; field_order: number[] }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.reorderTableFields(
           args.table_id,
@@ -516,7 +528,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       table_id: z.number().describe("Table ID"),
       csv_file: z.string().describe("CSV file content as string"),
     }).strict(),
-    execute: async (args: { table_id: number; csv_file: string }) => {
+    execute: async (args: { table_id: number; csv_file: string }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.replaceTableCsv(
           args.table_id,
@@ -549,7 +562,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
     }).strict(),
-    execute: async (args: { table_id: number }) => {
+    execute: async (args: { table_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.rescanTableFieldValues(
           args.table_id
@@ -581,7 +595,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
     parameters: z.object({
       table_id: z.number().describe("Table ID"),
     }).strict(),
-    execute: async (args: { table_id: number }) => {
+    execute: async (args: { table_id: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.syncTableSchema(args.table_id);
         return JSON.stringify(
@@ -618,7 +633,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       table_id: z.number().describe("Table ID"),
       limit: z.number().optional().describe("Row limit (default 1000)"),
     }).strict(),
-    execute: async (args: { table_id: number; limit?: number }) => {
+    execute: async (args: { table_id: number; limit?: number }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getTableData(
           args.table_id,
@@ -654,7 +670,8 @@ export function addTableTools(server: any, metabaseClient: MetabaseClient) {
       table_id: z.number().describe("Table ID to search in"),
       column_name: z.string().describe("Column name to look up (searches both name and display_name)"),
     }).strict(),
-    execute: async (args: { table_id: number; column_name: string }) => {
+    execute: async (args: { table_id: number; column_name: string }, context: any) => {
+      const metabaseClient = getClient(context);
       try {
         const result = await metabaseClient.getFieldByName(
           args.table_id,
