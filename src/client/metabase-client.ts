@@ -57,6 +57,9 @@ export class MetabaseClient {
 
         // Ensure authentication before making any API call
         await this.ensureAuthenticated();
+        if (this.sessionToken && this.sessionToken !== "api_key_used") {
+          config.headers["X-Metabase-Session"] = this.sessionToken;
+        }
         return config;
       },
       (error) => {
