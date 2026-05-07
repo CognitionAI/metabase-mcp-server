@@ -64,6 +64,21 @@ export class MetabaseClient {
       }
     );
 
+    // Response interceptor: propagate Metabase error body into error.message
+    this.axiosInstance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.data) {
+          const detail =
+            typeof error.response.data === "string"
+              ? error.response.data
+              : JSON.stringify(error.response.data);
+          error.message = `${error.message} | metabase: ${detail}`;
+        }
+        return Promise.reject(error);
+      }
+    );
+
   }
 
   private logInfo(message: string, data?: unknown) {
@@ -368,13 +383,25 @@ export class MetabaseClient {
   }
 
   async createCard(card: Partial<Card>): Promise<Card> {
-    const response = await this.axiosInstance.post("/api/card", card);
+    const normalized: any = { ...card };
+    // Some MCP clients stringify nested objects on tool calls; parse them back.
+    for (const k of ["dataset_query", "visualization_settings"]) {
+      if (typeof normalized[k] === "string") {
+        try { normalized[k] = JSON.parse(normalized[k]); } catch { /* leave as-is */ }
+      }
+    }
+    const body: any = {
+      visualization_settings: {},
+      ...normalized,
+      type: normalized.type ?? "question",
+    };
+    const response = await this.axiosInstance.post("/api/card", body);
     return response.data;
   }
 
   async updateCard(id: number, updates: Partial<Card>, queryParams?: any): Promise<Card> {
     let url = `/api/card/${id}`;
-    
+
     if (queryParams && Object.keys(queryParams).length > 0) {
       const searchParams = new URLSearchParams();
       Object.entries(queryParams).forEach(([key, value]) => {
@@ -384,8 +411,21 @@ export class MetabaseClient {
       });
       url += `?${searchParams.toString()}`;
     }
-    
-    const response = await this.axiosInstance.put(url, updates);
+
+    let normalized: any = updates;
+    if (typeof normalized === "string") {
+      try { normalized = JSON.parse(normalized); } catch { /* leave as-is */ }
+    }
+    if (normalized && typeof normalized === "object") {
+      normalized = { ...normalized };
+      for (const k of ["dataset_query", "visualization_settings"]) {
+        if (typeof normalized[k] === "string") {
+          try { normalized[k] = JSON.parse(normalized[k]); } catch { /* leave as-is */ }
+        }
+      }
+    }
+
+    const response = await this.axiosInstance.put(url, normalized);
     return response.data;
   }
 
