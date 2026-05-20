@@ -55,8 +55,14 @@ export class MetabaseClient {
           return config;
         }
 
-        // Ensure authentication before making any API call
-        await this.ensureAuthenticated();
+        // Ensure authentication and attach session header to this request's config.
+        // Setting defaults.headers alone is not enough — the current request's
+        // headers are already resolved by the time the interceptor runs, so the
+        // header must be set directly on `config`.
+        if (!this.config.apiKey) {
+          const token = await this.getSessionToken();
+          config.headers["X-Metabase-Session"] = token;
+        }
         return config;
       },
       (error) => {
