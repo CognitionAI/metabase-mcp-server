@@ -52,7 +52,8 @@
     "axios": "^1.8.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "fastmcp": "^3.14.5"
+    "fastmcp": "^3.14.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.17.22",
