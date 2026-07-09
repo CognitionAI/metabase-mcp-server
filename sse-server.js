@@ -3,7 +3,7 @@ import cors from 'cors';
 import { spawn } from 'child_process';
 
 const app = express();
-const port = 8080;
+const port = process.env.PORT || 8010;
 
 app.use(cors());
 app.use(express.json());
@@ -12,6 +12,14 @@ const connections = new Map();
 
 app.get('/health', (req, res) => {
  res.json({ status: 'ok', service: 'metabase-mcp-server' });
+});
+
+// OAuth discovery endpoint - tells clients no OAuth auth is required
+app.get('/.well-known/oauth-authorization-server', (req, res) => {
+ res.setHeader('Content-Type', 'application/json');
+ res.json({
+   issuer: process.env.SSE_SERVER_URL || 'http://localhost:8010'
+ });
 });
 
 app.get('/sse', async (req, res) => {
