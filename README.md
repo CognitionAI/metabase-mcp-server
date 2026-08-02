@@ -1,6 +1,6 @@
 # Readme: Metabase MCP Server
 
-[![npm version](https://img.shields.io/npm/v/@cognitionai/metabase-mcp-server)](https://www.npmjs.com/package/@cognitionai/metabase-mcp-server)
+[![npm version](https://img.shields.io/npm/v/@thangnm93/metabase-mcp-server)](https://www.npmjs.com/package/@thangnm93/metabase-mcp-server)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -13,7 +13,7 @@ A comprehensive Model Context Protocol (MCP) server for Metabase integration, pr
 # Install and run with npx
 export METABASE_URL=https://your-metabase-instance.com
 export METABASE_API_KEY=your_metabase_api_key
-npx @cognitionai/metabase-mcp-server
+npx @thangnm93/metabase-mcp-server
 ```
 
 ## ✨ Features
@@ -32,12 +32,12 @@ npx @cognitionai/metabase-mcp-server
 
 ### Method 1: NPX (Recommended)
 ```bash
-npx @cognitionai/metabase-mcp-server
+npx @thangnm93/metabase-mcp-server
 ```
 
 ### Method 2: Global Installation
 ```bash
-npm install -g @cognitionai/metabase-mcp-server
+npm install -g @thangnm93/metabase-mcp-server
 metabase-mcp-server
 ```
 
@@ -46,7 +46,7 @@ metabase-mcp-server
 docker run -it --rm \
   -e METABASE_URL=https://your-metabase-instance.com \
   -e METABASE_API_KEY=your_metabase_api_key \
-  ghcr.io/CognitionAI/metabase-mcp-server
+  ghcr.io/thangnm93/metabase-mcp-server
 ```
 
 ## ⚙️ Configuration
@@ -66,6 +66,23 @@ export METABASE_USERNAME=your_username
 export METABASE_PASSWORD=your_password
 ```
 
+**Extra Request Headers (Optional):**
+
+Use `METABASE_HEADER_<NAME>` to inject additional headers into every outgoing request — useful for reverse proxies, API gateways, or multi-tenant setups that require extra auth tokens or routing headers.
+
+The suffix is converted to a header name by replacing `_` with `-`:
+
+```bash
+# Adds "Authorization: Bearer <token>" to every request
+export METABASE_HEADER_AUTHORIZATION="Bearer your-token"
+
+# Adds "X-Tenant-Id: my-org"
+export METABASE_HEADER_X_TENANT_ID="my-org"
+
+# Adds "X-Api-Gateway-Key: secret"
+export METABASE_HEADER_X_API_GATEWAY_KEY="secret"
+```
+
 ### Optional Arguments
 
 The server supports command-line arguments to customize tool loading:
@@ -78,16 +95,16 @@ The server supports command-line arguments to customize tool loading:
 ```bash
 # Using published package (recommended)
 # Default behavior (essential tools only)
-npx @cognitionai/metabase-mcp-server
+npx @thangnm93/metabase-mcp-server
 
 # Load all tools
-npx @cognitionai/metabase-mcp-server --all
+npx @thangnm93/metabase-mcp-server --all
 
 # Load only write tools
-npx @cognitionai/metabase-mcp-server --write
+npx @thangnm93/metabase-mcp-server --write
 
 # Load only read-only tools
-npx @cognitionai/metabase-mcp-server --read
+npx @thangnm93/metabase-mcp-server --read
 
 # Using local development build
 npm run build
@@ -109,7 +126,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   "mcpServers": {
     "metabase": {
       "command": "npx",
-      "args": ["@cognitionai/metabase-mcp-server"],
+      "args": ["@thangnm93/metabase-mcp-server"],
       "env": {
         "METABASE_URL": "https://your-metabase-instance.com",
         "METABASE_API_KEY": "your_metabase_api_key"
@@ -141,10 +158,28 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   "mcpServers": {
     "metabase-all": {
       "command": "npx",
-      "args": ["@cognitionai/metabase-mcp-server", "--all"],
+      "args": ["@thangnm93/metabase-mcp-server", "--all"],
       "env": {
         "METABASE_URL": "https://your-metabase-instance.com",
         "METABASE_API_KEY": "your_metabase_api_key"
+      }
+    }
+  }
+}
+```
+
+**With extra headers (e.g. behind a reverse proxy or API gateway):**
+```json
+{
+  "mcpServers": {
+    "metabase": {
+      "command": "npx",
+      "args": ["@thangnm93/metabase-mcp-server"],
+      "env": {
+        "METABASE_URL": "https://your-metabase-instance.com",
+        "METABASE_API_KEY": "your_metabase_api_key",
+        "METABASE_HEADER_AUTHORIZATION": "Bearer your-proxy-token",
+        "METABASE_HEADER_X_TENANT_ID": "my-org"
       }
     }
   }
@@ -161,7 +196,7 @@ Add to your Windsurf MCP config (`~/.windsurf/mcp_config.json`):
   "mcpServers": {
     "metabase": {
       "command": "npx",
-      "args": ["@cognitionai/metabase-mcp-server"],
+      "args": ["@thangnm93/metabase-mcp-server"],
       "env": {
         "METABASE_URL": "https://your-metabase-instance.com",
         "METABASE_API_KEY": "your_metabase_api_key"
@@ -193,7 +228,7 @@ Add to your Windsurf MCP config (`~/.windsurf/mcp_config.json`):
   "mcpServers": {
     "metabase-read": {
       "command": "npx",
-      "args": ["@cognitionai/metabase-mcp-server", "--read"],
+      "args": ["@thangnm93/metabase-mcp-server", "--read"],
       "env": {
         "METABASE_URL": "https://your-metabase-instance.com",
         "METABASE_API_KEY": "your_metabase_api_key"
@@ -201,7 +236,7 @@ Add to your Windsurf MCP config (`~/.windsurf/mcp_config.json`):
     },
     "metabase-write": {
       "command": "npx",
-      "args": ["@cognitionai/metabase-mcp-server", "--write"],
+      "args": ["@thangnm93/metabase-mcp-server", "--write"],
       "env": {
         "METABASE_URL": "https://your-metabase-instance.com",
         "METABASE_API_KEY": "your_metabase_api_key"
@@ -371,7 +406,7 @@ Add to your Windsurf MCP config (`~/.windsurf/mcp_config.json`):
 
 ### Setup
 ```bash
-git clone https://github.com/CognitionAI/metabase-mcp-server.git
+git clone https://github.com/thangnm93/metabase-mcp-server.git
 cd metabase-mcp-server
 npm install
 ```
@@ -430,7 +465,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please visit our [GitHub repository](https://github.com/CognitionAI/metabase-mcp-server) to:
+Contributions are welcome! Please visit our [GitHub repository](https://github.com/thangnm93/metabase-mcp-server) to:
 
 - 🐛 Report bugs
 - 💡 Request features  
@@ -447,8 +482,8 @@ Contributions are welcome! Please visit our [GitHub repository](https://github.c
 
 ## 🆘 Support
 
-- 📚 [Documentation](https://github.com/CognitionAI/metabase-mcp-server/wiki)
-- 🐛 [Issue Tracker](https://github.com/CognitionAI/metabase-mcp-server/issues)
+- 📚 [Documentation](https://github.com/thangnm93/metabase-mcp-server/wiki)
+- 🐛 [Issue Tracker](https://github.com/thangnm93/metabase-mcp-server/issues)
 
 ---
 

@@ -2,7 +2,8 @@
 
 import { FastMCP } from "fastmcp";
 import { MetabaseClient } from "./client/metabase-client.js";
-import { loadConfig, validateConfig } from "./utils/config.js";
+import { loadConfig, validateConfig, isPiiFilterEnabled } from "./utils/config.js";
+import { filterPiiFromToolResult } from "./utils/pii-filter.js";
 import { addDashboardTools } from "./tools/dashboard-tools.js";
 import { addDatabaseTools } from "./tools/database-tools.js";
 import { addCardTools } from "./tools/card-tools.js";
@@ -12,6 +13,7 @@ import { parseToolFilterOptions } from "./utils/tool-filters.js";
 
 // Parse command line arguments for tool filtering
 const filterOptions = parseToolFilterOptions();
+const piiFilterEnabled = isPiiFilterEnabled();
 
 // Load and validate configuration
 const config = loadConfig();
@@ -26,7 +28,7 @@ const server = new FastMCP({
   version: "2.0.1",
 });
 
-// Override addTool to apply filtering
+// Override addTool to apply filtering and PII redaction
 const originalAddTool = server.addTool.bind(server);
 server.addTool = function(toolConfig: any) {
   const { metadata = {}, ...restConfig } = toolConfig;
@@ -35,16 +37,28 @@ server.addTool = function(toolConfig: any) {
   // Apply filtering based on selected mode
   switch (filterOptions.mode) {
     case 'essential':
-      // Only load essential tools
       if (!isEssential) return;
       break;
     case 'write':
-      // Load read and write tools
       if (!isRead && !isWrite) return;
       break;
     case 'all':
-      // Load all tools - no filtering
       break;
+  }
+
+  // Wrap execute with PII filter
+  if (restConfig.execute) {
+    const originalExecute = restConfig.execute;
+    restConfig.execute = async (...args: any[]) => {
+      const result = await originalExecute(...args);
+      if (!piiFilterEnabled || typeof result !== 'string') return result;
+      try {
+        return filterPiiFromToolResult(result);
+      } catch (e) {
+        console.error('[pii-filter] Warning: filter failed, returning original result', e);
+        return result;
+      }
+    };
   }
 
   // Register the tool
@@ -72,6 +86,7 @@ switch (filterOptions.mode) {
     console.error(`INFO: All tools loaded.`);
     break;
 }
+console.error(`INFO: PII filter: ${piiFilterEnabled ? 'enabled' : 'disabled (METABASE_PII_FILTER=false)'}`);
 
 // Start the server
 server.start({

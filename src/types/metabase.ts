@@ -7,6 +7,7 @@ export interface MetabaseConfig {
   username?: string;
   password?: string;
   apiKey?: string;
+  extraHeaders?: Record<string, string>;
 }
 
 export interface Dashboard {
