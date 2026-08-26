@@ -354,8 +354,8 @@ export function addDatabaseTools(server: any, metabaseClient: MetabaseClient) {
       query: z.string().describe("The SQL query to execute"),
       parameters: z.array(z.object({
         type: z.string().optional().describe("Parameter type (e.g. 'category', 'date')"),
-        target: z.array(z.unknown()).optional().describe("Target specification"),
-        value: z.unknown().describe("Parameter value"),
+        target: z.array(z.any()).optional().describe("Target specification"),
+        value: z.any().describe("Parameter value"),
       }).passthrough()).optional().describe("Optional query parameters for parameterized queries"),
     }).strict(),
     execute: async (args: { database_id: number; query: string; parameters?: any[] }) => {

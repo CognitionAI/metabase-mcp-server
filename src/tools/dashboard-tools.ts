@@ -416,7 +416,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         .array(z.object({
           parameter_id: z.string().describe("The parameter ID to map"),
           card_id: z.number().describe("The card ID this mapping applies to"),
-          target: z.array(z.unknown()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
+          target: z.array(z.any()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
         }).passthrough())
         .optional()
         .describe("Parameter mappings for the card - connects dashboard filters to card fields"),
@@ -804,12 +804,22 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
             .passthrough()
         )
         .describe("Array of card configurations"),
+      tabs: z
+        .array(
+          z.object({
+            id: z.number().optional().describe("Tab ID (omit for new tabs)"),
+            name: z.string().describe("Tab name"),
+          }).passthrough()
+        )
+        .optional()
+        .describe("Dashboard tabs. Pass [] to remove all tabs. Omit to preserve existing tabs."),
     }).strict(),
-    execute: async (args: { dashboard_id: number; cards: any[] }) => {
+    execute: async (args: { dashboard_id: number; cards: any[]; tabs?: any[] }) => {
       try {
         const result = await metabaseClient.updateDashboardCards(
           args.dashboard_id,
-          args.cards
+          args.cards,
+          args.tabs
         );
         return JSON.stringify(result, null, 2);
       } catch (error) {
@@ -1094,7 +1104,7 @@ export function addDashboardTools(server: any, metabaseClient: MetabaseClient) {
         parameter_mappings: z.array(z.object({
           parameter_id: z.string().describe("The parameter ID to map"),
           card_id: z.number().describe("The card ID this mapping applies to"),
-          target: z.array(z.unknown()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
+          target: z.array(z.any()).describe("Target specification - e.g. ['dimension', ['field', field_id, {...}]] or ['variable', ['template-tag', name]]"),
         }).passthrough()).optional().describe("Parameter mappings for connecting filters"),
         visualization_settings: z.object({}).passthrough().optional().describe("Visualization settings"),
         row: z.number().optional().describe("Row position"),
