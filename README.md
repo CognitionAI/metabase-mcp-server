@@ -72,8 +72,18 @@ The server supports command-line arguments to customize tool loading:
 
 - **`--essential`** (default): Load only essential tools
 - **`--all`**: Load all 80+ available tools
-- **`--write`**: Load only write/modification tools
-- **`--read`**: Load only read-only tools
+- **`--write`**: Load tools marked as read or write tools
+
+These modes select tools; none is a read-only mode. Essential mode includes
+modification tools such as `create_dashboard`. If multiple supported mode flags
+are supplied, precedence is `--all`, then `--write`, then `--essential`.
+
+**Migrating from v1.0.14:** Version 2 removed `--read` and changed `--write`
+from write-only to read-and-write tool selection. `--read` is now rejected with
+an error, including when combined with other mode flags; update existing client
+configurations to choose a supported mode explicitly. Version 2 also removed
+the `metabase://...` MCP resources; use the corresponding tools such as
+`list_dashboards` and `list_cards` to retrieve that data.
 
 ```bash
 # Using published package (recommended)
@@ -83,18 +93,14 @@ npx @cognitionai/metabase-mcp-server
 # Load all tools
 npx @cognitionai/metabase-mcp-server --all
 
-# Load only write tools
+# Load read and write tools
 npx @cognitionai/metabase-mcp-server --write
-
-# Load only read-only tools
-npx @cognitionai/metabase-mcp-server --read
 
 # Using local development build
 npm run build
 node dist/server.js                    # Default (essential tools)
 node dist/server.js --all             # All tools
-node dist/server.js --write           # Write tools only
-node dist/server.js --read            # Read-only tools only
+node dist/server.js --write           # Read and write tools
 ```
 
 ## 🔌 Integration Examples
@@ -191,15 +197,15 @@ Add to your Windsurf MCP config (`~/.windsurf/mcp_config.json`):
 ```json
 {
   "mcpServers": {
-    "metabase-read": {
+    "metabase-essential": {
       "command": "npx",
-      "args": ["@cognitionai/metabase-mcp-server", "--read"],
+      "args": ["@cognitionai/metabase-mcp-server", "--essential"],
       "env": {
         "METABASE_URL": "https://your-metabase-instance.com",
         "METABASE_API_KEY": "your_metabase_api_key"
       }
     },
-    "metabase-write": {
+    "metabase-read-write": {
       "command": "npx",
       "args": ["@cognitionai/metabase-mcp-server", "--write"],
       "env": {
@@ -380,6 +386,13 @@ npm install
 ```bash
 npm run build
 ```
+
+### Tests
+```bash
+npm test
+```
+
+The CLI tests list tools over MCP without connecting to a Metabase instance.
 
 ### Development Mode
 ```bash

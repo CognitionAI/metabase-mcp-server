@@ -12,6 +12,14 @@ export interface ToolFilterOptions {
  */
 export function parseToolFilterOptions(): ToolFilterOptions {
   const args = process.argv.slice(2);
+
+  // Do not silently replace the removed read-only mode with another tool set.
+  if (args.includes('--read')) {
+    throw new Error(
+      '--read is no longer supported. No read-only mode is available. ' +
+      'Choose --essential, --write (read and write tools), or --all explicitly.'
+    );
+  }
   
   // Check for explicit mode flags in priority order
   if (args.includes('--all')) {
