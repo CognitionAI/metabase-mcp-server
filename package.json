@@ -36,6 +36,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "test": "npm run build && node --test --test-concurrency=1 test/*.test.js",
     "build": "npm run clean && tsc && node -e \"require('fs').chmodSync('build/server.js', '755')\" && mkdir -p dist && cp -r build/. dist/",
     "prepack": "npm run build",
     "watch": "tsc --watch",
