@@ -4,8 +4,45 @@ import { spawn } from 'child_process';
 
 const app = express();
 const port = 8080;
+const host = process.env.BIND_HOST || '127.0.0.1';
 
-app.use(cors());
+// Hostnames allowed in the Host and Origin headers. This bridge drives tools
+// that create, query and delete databases, so a web page on another origin
+// must not be able to reach it. Requests whose Host is not allowed, or whose
+// Origin is present and not allowed, are refused. Set ALLOWED_HOSTS to serve it
+// beyond localhost.
+const allowedHosts = (process.env.ALLOWED_HOSTS || 'localhost,127.0.0.1,[::1]')
+ .split(',').map(h => h.trim()).filter(Boolean);
+
+function hostnameOf(value, withScheme) {
+ try {
+ return new URL(withScheme ? value : `http://${value}`).hostname;
+ } catch {
+ return null;
+ }
+}
+
+function originAllowed(origin) {
+ if (!origin) return true;
+ const name = hostnameOf(origin, true);
+ return name !== null && allowedHosts.includes(name);
+}
+
+function hostAllowed(hostHeader) {
+ if (!hostHeader) return false;
+ const name = hostnameOf(hostHeader, false);
+ return name !== null && allowedHosts.includes(name);
+}
+
+app.use((req, res, next) => {
+ if (!hostAllowed(req.headers.host) || !originAllowed(req.headers.origin)) {
+ res.status(403).json({ error: 'Forbidden host or origin' });
+ return;
+ }
+ next();
+});
+
+app.use(cors({ origin: (origin, cb) => cb(null, originAllowed(origin)) }));
 app.use(express.json());
 
 const connections = new Map();
@@ -23,7 +60,7 @@ app.get('/sse', async (req, res) => {
  'Content-Type': 'text/event-stream',
  'Cache-Control': 'no-cache',
  'Connection': 'keep-alive',
- 'Access-Control-Allow-Origin': '*',
+ 'Access-Control-Allow-Origin': req.headers.origin || 'null',
  'Access-Control-Allow-Headers': 'Cache-Control, Content-Type',
  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
  });
@@ -35,8 +72,8 @@ app.get('/sse', async (req, res) => {
  env: {
  ...process.env,
  METABASE_URL: process.env.METABASE_URL || 'http://localhost:3000',
- METABASE_USERNAME: process.env.METABASE_USERNAME || 'admin@metabase.local',
- METABASE_PASSWORD: process.env.METABASE_PASSWORD || 'MetabaseAdmin2024!'
+ METABASE_USERNAME: process.env.METABASE_USERNAME,
+ METABASE_PASSWORD: process.env.METABASE_PASSWORD
  },
  stdio: ['pipe', 'pipe', 'pipe']
  });
@@ -110,8 +147,8 @@ app.post('/message', async (req, res) => {
  }
 });
 
-app.listen(port, () => {
- console.log(`Simple SSE bridge running on port ${port}`);
+app.listen(port, host, () => {
+ console.log(`Simple SSE bridge running on ${host} port ${port}`);
  console.log(`Health check: http://localhost:${port}/health`);
  console.log(`SSE endpoint: http://localhost:${port}/sse`);
  console.log(`Message endpoint: http://localhost:${port}/message`);
